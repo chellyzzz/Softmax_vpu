@@ -41,11 +41,11 @@ localparam                              TAG_BITS = ADDR_WIDTH - INDEX_BITS - OFF
 // AXI
 /******************************regs*****************************/
     // Initiate AXI transactions
-reg                                         axi_arvalid                ;
-reg                                         axi_rready                 ;
-reg                    [   RINDEX-1:0]      read_index                 ;
-reg                    [  31-OFFSET_BITS:0] araddr                     ;
-reg                                         idle                       ;
+reg                                     axi_arvalid                ;
+reg                                     axi_rready                 ;
+reg                    [   RINDEX-1:0]  read_index                 ;
+reg                    [  31-OFFSET_BITS:0]araddr                     ;
+reg                                     idle                       ;
 /******************************nets*****************************/
     // AXI clock signal
     // AXI active low reset signal
@@ -57,14 +57,14 @@ reg                                         idle                       ;
     assign M_AXI_ARID       = 'b0;
     assign M_AXI_ARLEN      = ARLEN;
     assign M_AXI_ARSIZE     = 3'b010;
-    assign M_AXI_ARBURST    = 2'b01; //incrementing burst
-    assign M_AXI_RREADY     = axi_rready; 
+    assign M_AXI_ARBURST    = 2'b01;                                //incrementing burst
+    assign M_AXI_RREADY     = axi_rready;
 
 
 // Cache control logic 
 always @(posedge clock)
 begin
-    if(~rst_n_sync) 
+    if(~rst_n_sync)
         begin
             cache_valid <= 'b0;
         end

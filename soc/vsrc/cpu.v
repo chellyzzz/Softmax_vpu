@@ -1,8 +1,7 @@
-module ysyx_23060124
+module cpu_core
 (
-    input                               clock                        ,
+    input                               clock                      ,
     input                               reset                      ,
-    input                               io_interrupt               ,
   //     | AXI4 Master总线 |
     input                               io_master_awready          ,
     output                              io_master_awvalid          ,

@@ -1,22 +1,14 @@
-TOPNAME = ysyxSoCFull
-
-NXDC_FILES = constr/top.nxdc
+TOPNAME = top
 
 VNAME = V$(TOPNAME)
-YSYX_SOC_HOME := $(abspath $(NEMU_HOME)/../ysyxSoC)
+SOC_HOME := $(shell pwd)
+# YSYX_SOC_HOME := $(abspath $(SOC_HOME)/../ysyxSoC)
 
 BUILD_DIR = $(SOC_HOME)/build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 
 $(shell mkdir -p $(BUILD_DIR))
 
-# constraint file
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
-
-# rules for NVBoard
-include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # Verilator
 VERILATOR=verilator
@@ -43,9 +35,6 @@ LIBS += $(shell llvm-config --libs)
 INC_PATH += $(SOC_HOME)/csrc/include $(SOC_HOME)/csrc/isa/include $(LIBS)
 INC_PATH += $(shell sdl2-config --cflags | sed 's/-I//g')
 
-UART16550_DIR := $(YSYX_SOC_HOME)/perip/uart16550/rtl
-SPI_DIR := $(YSYX_SOC_HOME)/perip/spi/rtl
-
 C_FLAGS += -CFLAGS "$(INCFLAGS)"
 C_FLAGS += -CFLAGS "-D__GUEST_ISA__=riscv32"
 
@@ -63,10 +52,7 @@ NPC_FLAGS += -b
 NPC_FLAGS += -i $(IMAGE)
 
 VSRCS += $(shell find $(abspath $(SOC_HOME)/vsrc) \( -name "*.v" -o -name "*.sv" \) -print)
-VSRCS += $(shell find $(YSYX_SOC_HOME)/perip -name "*.v" -print)
-VSRCS += $(shell find $(YSYX_SOC_HOME)/build -name "*.v" -print)
 CSRCS += $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-CSRCS += $(SRC_AUTO_BIND)
 
 LDFLAGS += -lLLVM-14 -lreadline 
 LDFLAGS += -lSDL2 -lSDL2_image

@@ -1,50 +1,53 @@
-`include "para_defines.v"
-
-module SRAM(
-    input S_AXI_ACLK,
-    input S_AXI_ARESETN,
-    //read data channel
-    output  [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0] S_AXI_RDATA,
-    output  [1 : 0] S_AXI_RRESP,
-    output   S_AXI_RVALID,
-    input    S_AXI_RREADY,
-
-    //read adress channel
-    input   [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0] S_AXI_ARADDR,
-    input    S_AXI_ARVALID,
-    output   S_AXI_ARREADY,
-
-    //write back channel
-    output  [1 : 0] S_AXI_BRESP,
-    output   S_AXI_BVALID,
-    input    S_AXI_BREADY,
-
-    //write address channel  
-    input   [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0] S_AXI_AWADDR,
-    input    S_AXI_AWVALID,
-    output   S_AXI_AWREADY,
-
-    //write data channel
-    input   [`ysyx_23060124_ISA_WIDTH-1:0] S_AXI_WDATA,
-    input   [`ysyx_23060124_OPT_WIDTH-1 : 0] S_AXI_WSTRB,
-    input    S_AXI_WVALID,
-    output   S_AXI_WREADY
+module ram_simulation #(
+    parameter                           ADDR_WIDTH = 32            ,
+    parameter                           DATA_WIDTH = 32            ,
+    parameter                           LATENCY = 2                 
+)(
+    output             [  ADDR_WIDTH-1:0]SRAM_AWADDR                ,
+    output                              SRAM_AWVALID               ,
+    input                               SRAM_AWREADY               ,
+    output             [   3:0]         SRAM_AWID                  ,
+    output             [   7:0]         SRAM_AWLEN                 ,
+    output             [   2:0]         SRAM_AWSIZE                ,
+    output             [   1:0]         SRAM_AWBURST               ,
+    output             [  DATA_WIDTH-1:0]SRAM_WDATA                 ,
+    output             [   3:0]         SRAM_WSTRB                 ,
+    output                              SRAM_WVALID                ,
+    input                               SRAM_WREADY                ,
+    output                              SRAM_WLAST                 ,
+    input              [   1:0]         SRAM_BRESP                 ,
+    input                               SRAM_BVALID                ,
+    output                              SRAM_BREADY                ,
+    input              [   3:0]         SRAM_BID                   ,
+    output             [  ADDR_WIDTH-1:0]SRAM_ARADDR                ,
+    output             [   3:0]         SRAM_ARID                  ,
+    output                              SRAM_ARVALID               ,
+    input                               SRAM_ARREADY               ,
+    output             [   7:0]         SRAM_ARLEN                 ,
+    output             [   2:0]         SRAM_ARSIZE                ,
+    output             [   1:0]         SRAM_ARBURST               ,
+    input              [  DATA_WIDTH-1:0]SRAM_RDATA                 ,
+    input              [   1:0]         SRAM_RRESP                 ,
+    input                               SRAM_RVALID                ,
+    output                              SRAM_RREADY                ,
+    input              [   3:0]         SRAM_RID                   ,
+    input                               SRAM_RLAST                  
 );
 
 import "DPI-C" function void npc_pmem_read (input int raddr, output int rdata, input bit ren, input int len);
 import "DPI-C" function void npc_pmem_write (input int waddr, input int wdata, input bit wen, input int len);
 
 // AXI4LITE signals
-reg [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0] 	axi_awaddr;
-reg  	axi_awready;
-reg  	axi_wready;
-reg [1 : 0] 	axi_bresp;
-reg  	axi_bvalid;
-reg [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0] 	axi_araddr;
-reg  	axi_arready;
-reg [`ysyx_23060124_ISA_WIDTH-1 : 0] 	axi_rdata;
-reg [1 : 0] 	axi_rresp;
-reg  	axi_rvalid;
+reg                    [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0]axi_awaddr                 ;
+reg                                     axi_awready                ;
+reg                                     axi_wready                 ;
+reg                    [   1:0]         axi_bresp                  ;
+reg                                     axi_bvalid                 ;
+reg                    [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0]axi_araddr                 ;
+reg                                     axi_arready                ;
+reg                    [`ysyx_23060124_ISA_WIDTH-1 : 0]axi_rdata                  ;
+reg                    [   1:0]         axi_rresp                  ;
+reg                                     axi_rvalid                 ;
 
 //----------------------------------------------
 //-- Signals for user logic register space example
@@ -276,5 +279,6 @@ begin
             // axi_rresp <= 2'b0; // 'IDLE' response
     end
 end    
+
 
 endmodule
