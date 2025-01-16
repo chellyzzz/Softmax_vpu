@@ -3,36 +3,24 @@
 
 #include <riscv_vector.h>
 #include "encoding.h"
+#include "name.h"
 
-#ifdef __SPIKE__
-#define DEBUG_PRINT 1
-#define CACHELINE 0
-#else
-#define DEBUG_PRINT 0
-#define CACHELINE 128
-#endif
+// #ifdef __SPIKE__
+// #define DEBUG_PRINT 1
+// #define CACHELINE 0
+// #else
+// #define DEBUG_PRINT 0
+// #define CACHELINE 128
+// #endif
 
-#ifndef __clang__
-typedef __float16_t float16_t;
-#else
-typedef _Float16 float16_t;
-#endif
+// #ifndef __clang__
+// typedef __float16_t float16_t;
+// #else
+// typedef _Float16 float16_t;
+
+#define VLEN 2048
 typedef float float32_t;
 typedef double float64_t;
-
-#define stringify1(x) #x
-#define stringify(x) stringify1(x)
-#define assert(x) do { \
-  if (x) break; \
-  printf("Assertion failed: " stringify(x) "\n"); \
-  exit(3); \
-} while(0)
-
-#define VLEN  (read_csr(vlenb) * 8)
-#define VLENB  (read_csr(vlenb))
-
-#define min(a, b)  (a < b? a: b)
-#define max(a, b)  (a > b? a: b)
 
 typedef struct {
     int shape[4];

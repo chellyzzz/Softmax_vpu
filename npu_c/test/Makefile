@@ -1,21 +1,29 @@
-# 定义编译器
-CC = riscv64-unknown-linux-gnu-gcc
+CC = riscv64-unknown-elf-gcc
+TOP = main
 
-# 编译选项
-CFLAGS = -march=rv64gcv -mabi=lp64d -Iinclude
+BUILD_DIR = build
+TARGET = $(BUILD_DIR)/$(TOP)
 
-# 源文件和头文件目录
-SRC = main.c
 INCLUDE_DIR = include
+SRC += $(TOP).c 
+SRC += $(INCLUDE_DIR)/start.S
 
-# 可执行文件
-TARGET = test
+
+CFLAGS  += -O2 -march=rv64gcv -mabi=lp64d -I$(INCLUDE_DIR)
+CFLAGS  += -nostdlib  -fPIC
+LDFLAGS += -T $(INCLUDE_DIR)/linker.ld
+
+default: run disa
 
 # 生成规则
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $< -o $@
+run: $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(TARGET)
 
-# 清理规则
-.PHONY: clean
+disa: $(TARGET)
+	riscv64-unknown-elf-objdump -D $(TARGET) > $(TARGET).txt
+
 clean:
-	rm -f $(TARGET)
+	rm -f $(BUILD_DIR)/*
+
+
+.PHONY: clean run disa default	
