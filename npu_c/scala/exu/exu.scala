@@ -1,11 +1,13 @@
+package cpu
+
 import chisel3._
 import chisel3.util._
-import parameter.Parameter._
+import parameters.Parameter
+import parameters.axi_master
+import parameters.axi_slave 
 
-class EXU extends Module {
+class EXU extends Module with Parameter {
   val io = IO(new Bundle {
-    val clock       = Input(Clock())
-    val reset       = Input(Bool())
     val i_src1      = Input(UInt(DataWidth.W))
     val i_src2      = Input(UInt(DataWidth.W))
     val i_pc        = Input(UInt(DataWidth.W))
@@ -31,41 +33,7 @@ class EXU extends Module {
     val o_pc_next   = Output(UInt(DataWidth.W))
 
     // AXI channels
-    val axi = new Bundle {
-      val awaddr  = Output(UInt(DataWidth.W))
-      val awvalid = Output(Bool())
-      val awready = Input(Bool())
-      val awlen   = Output(UInt(8.W))
-      val awsize  = Output(UInt(3.W))
-      val awburst = Output(UInt(2.W))
-      val awid    = Output(UInt(4.W))
-
-      val wvalid  = Output(Bool())
-      val wready  = Input(Bool())
-      val wdata   = Output(UInt(DataWidth.W))
-      val wstrb   = Output(UInt(4.W))
-      val wlast   = Output(Bool())
-
-      val rdata   = Input(UInt(DataWidth.W))
-      val rresp   = Input(UInt(2.W))
-      val rvalid  = Input(Bool())
-      val rready  = Output(Bool())
-      val rid     = Input(UInt(4.W))
-      val rlast   = Input(Bool())
-
-      val araddr  = Output(UInt(DataWidth.W))
-      val arvalid = Output(Bool())
-      val arready = Input(Bool())
-      val arid    = Output(UInt(4.W))
-      val arlen   = Output(UInt(8.W))
-      val arsize  = Output(UInt(3.W))
-      val arburst = Output(UInt(2.W))
-
-      val bresp   = Input(UInt(2.W))
-      val bvalid  = Input(Bool())
-      val bready  = Output(Bool())
-      val bid     = Input(UInt(4.W))
-    }
+    val lsu = new axi_master
 
     val i_post_ready = Input(Bool())
     val i_pre_valid  = Input(Bool())
@@ -87,17 +55,13 @@ class EXU extends Module {
   val ifLsu = io.i_load || io.i_store
 
   val postValid = RegInit(false.B)
-  
+  postValid := io.i_pre_valid
+
   // Handshake logic
-  io.o_post_valid := Mux(ifLsu, (io.axi.rlast && io.axi.rready) || io.axi.bready, postValid)
-  io.o_pre_ready := Mux(ifLsu, (io.axi.rlast && io.axi.rready) || io.axi.bready, true.B)
+  io.o_post_valid := Mux(ifLsu, (io.lsu.AXI_RLAST && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, postValid)
+  io.o_pre_ready := Mux(ifLsu, (io.lsu.AXI_RLAST && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, true.B)
 
-  when(io.reset) {
-    postValid := false.B
-  }.otherwise {
-    postValid := io.i_pre_valid
-  }
-
+  
   // ALU source selection
   val aluSrc1 = Wire(UInt(DataWidth.W))
   val aluSrc2 = Wire(UInt(DataWidth.W))
@@ -128,15 +92,15 @@ class EXU extends Module {
 
   // LSU instantiation
   val lsu = Module(new LSU)
-  lsu.io.clock := clock
-  lsu.io.reset := reset
   lsu.io.storeSrc := io.i_src2
   lsu.io.aluRes := aluRes
   lsu.io.exuOpt := io.exu_opt
   lsu.io.iLoad := io.i_load
   lsu.io.iStore := io.i_store
+  lsu.io.iPreValid := io.i_pre_valid
+  lsu.io.oPreReady := io.o_pre_ready
 
-  io.axi <> lsu.io.axi
+  io.lsu <> lsu.io.M_axi
   loadRes := lsu.io.loadRes
 
   // Branch comparison

@@ -1,24 +1,52 @@
+package cpu
+
 import chisel3._
 import chisel3.util._
-import parameter.Parameter._
+import parameters.Parameter
 
-class IDU_EXU_Regs(dataWidth: Int) extends Module {
+class IDU_EXU_OUT extends  Bundle with Parameter {
+  val pre_ready    = Output(Bool())
+  val post_valid   = Output(Bool())
+  val pc = UInt(32.W)
+  val src1 = UInt(DataWidth.W)
+  val src2 = UInt(DataWidth.W)
+  val imm = UInt(DataWidth.W)
+  val src_sel1 = UInt(2.W)
+  val src_sel2 = UInt(3.W)
+  val rd = UInt(4.W)
+  val exu_opt = UInt(3.W)
+  val alu_opt = UInt(10.W)
+  val wen = Bool()
+  val csr_wen = Bool()
+  val mret = Bool()
+  val ecall = Bool()
+  val load = Bool()
+  val store = Bool()
+  val brch = Bool()
+  val jal = Bool()
+  val jalr = Bool()
+  val fence_i = Bool()
+  val ebreak = Bool()
+  val csr_addr = UInt(12.W)
+}
+
+
+class IDU_EXU_Regs extends Module with Parameter {
   val io = IO(new Bundle {
     val i_pc           = Input(UInt(32.W))
-    val clock          = Input(Clock())
-    val reset          = Input(Reset())
     val i_pre_valid    = Input(Bool())
     val i_post_ready   = Input(Bool())
-    val o_pre_ready    = Output(Bool())
-    val o_post_valid   = Output(Bool())
 
-    val i_imm          = Input(UInt(dataWidth.W))
+    val i_imm          = Input(UInt(DataWidth.W))
     val i_csr_addr     = Input(UInt(12.W))
-    val i_src1         = Input(UInt(dataWidth.W))
-    val i_src2         = Input(UInt(dataWidth.W))
+    val i_src1         = Input(UInt(DataWidth.W))
+    val i_src2         = Input(UInt(DataWidth.W))
     val i_rd           = Input(UInt(4.W))
-    val i_csr_rs2      = Input(UInt(dataWidth.W))
+    val i_csr_rs2      = Input(UInt(DataWidth.W))
     val i_csr_src_sel  = Input(Bool())
+
+    val i_mepc         = Input(UInt(32.W))
+    val i_mtvec        = Input(UInt(DataWidth.W))
 
     val i_exu_opt      = Input(UInt(3.W))
     val i_alu_opt      = Input(UInt(10.W))
@@ -36,100 +64,53 @@ class IDU_EXU_Regs(dataWidth: Int) extends Module {
     val i_fence_i      = Input(Bool())
     val i_ebreak       = Input(Bool())
 
-    val i_mepc         = Input(UInt(32.W))
-    val i_mtvec        = Input(UInt(dataWidth.W))
-
-    val o_pc           = Output(UInt(32.W))
-    val o_src1         = Output(UInt(dataWidth.W))
-    val o_src2         = Output(UInt(dataWidth.W))
-    val o_imm          = Output(UInt(dataWidth.W))
-    val o_src_sel1     = Output(UInt(2.W))
-    val o_src_sel2     = Output(UInt(3.W))
-    val o_rd           = Output(UInt(4.W))
-    val o_csr_addr     = Output(UInt(12.W))
-    val o_exu_opt      = Output(UInt(3.W))
-    val o_alu_opt      = Output(UInt(10.W))
-    val o_wen          = Output(Bool())
-    val o_csr_wen      = Output(Bool())
-    val o_mret         = Output(Bool())
-    val o_ecall        = Output(Bool())
-    val o_load         = Output(Bool())
-    val o_store        = Output(Bool())
-    val o_brch         = Output(Bool())
-    val o_jal          = Output(Bool())
-    val o_jalr         = Output(Bool())
-    val o_fence_i      = Output(Bool())
-    val o_ebreak       = Output(Bool())
+    val out = Output(new IDU_EXU_OUT)
   })
 
   val postValid = RegInit(false.B)
   
-  io.o_post_valid := postValid
-  io.o_pre_ready := io.i_post_ready
+  io.out.post_valid := postValid
+  io.out.pre_ready := io.i_post_ready
 
-  val selSrc1 = Wire(UInt(dataWidth.W))
-  val selSrc2 = Wire(UInt(dataWidth.W))
+  val selSrc1 = Wire(UInt(DataWidth.W))
+  val selSrc2 = Wire(UInt(DataWidth.W))
 
   selSrc1 := Mux(io.i_ecall, io.i_mtvec, Mux(io.i_mret, io.i_mepc, io.i_src1))
   selSrc2 := Mux(io.i_csr_src_sel, io.i_csr_rs2, io.i_src2)
 
-  when(reset.asBool) {
-    postValid := false.B
-  }.elsewhen(io.i_pre_valid) {
+  when(io.i_pre_valid) {
     postValid := true.B
-  }.elsewhen(!io.i_pre_valid && io.i_post_ready && io.o_post_valid) {
+  }.elsewhen(!io.i_pre_valid && io.i_post_ready && io.out.post_valid) {
     postValid := false.B
   }
 
-  val oRegs = RegInit(0.U.asTypeOf(io))
+  val out_reg = RegInit(0.U.asTypeOf(new IDU_EXU_OUT))
 
-  when(reset.asBool) {
-    oRegs := 0.U.asTypeOf(io)
-  }.elsewhen(io.i_post_ready && io.o_post_valid) {
-    oRegs.o_pc := io.i_pc
-    oRegs.o_src1 := selSrc1
-    oRegs.o_src2 := selSrc2
-    oRegs.o_imm := io.i_imm
-    oRegs.o_src_sel1 := io.i_src_sel1
-    oRegs.o_src_sel2 := io.i_src_sel2
-    oRegs.o_rd := io.i_rd
-    oRegs.o_exu_opt := io.i_exu_opt
-    oRegs.o_alu_opt := io.i_alu_opt
-    oRegs.o_wen := io.i_wen
-    oRegs.o_csr_wen := io.i_csr_wen
-    oRegs.o_mret := io.i_mret
-    oRegs.o_ecall := io.i_ecall
-    oRegs.o_load := io.i_load
-    oRegs.o_store := io.i_store
-    oRegs.o_brch := io.i_brch
-    oRegs.o_jal := io.i_jal
-    oRegs.o_jalr := io.i_jalr
-    oRegs.o_ebreak := io.i_ebreak
-    oRegs.o_fence_i := io.i_fence_i
-    oRegs.o_csr_addr := io.i_csr_addr
-  }.elsewhen(io.i_post_ready && !io.o_post_valid) {
-    oRegs := 0.U.asTypeOf(io)
+  when(io.i_post_ready && io.out.post_valid) {
+    out_reg.pc := io.i_pc
+    out_reg.src1 := selSrc1
+    out_reg.src2 := selSrc2
+    out_reg.imm := io.i_imm
+    out_reg.src_sel1 := io.i_src_sel1
+    out_reg.src_sel2 := io.i_src_sel2
+    out_reg.rd := io.i_rd
+    out_reg.exu_opt := io.i_exu_opt
+    out_reg.alu_opt := io.i_alu_opt
+    out_reg.wen := io.i_wen
+    out_reg.csr_wen := io.i_csr_wen
+    out_reg.mret := io.i_mret
+    out_reg.ecall := io.i_ecall
+    out_reg.load := io.i_load
+    out_reg.store := io.i_store
+    out_reg.brch := io.i_brch
+    out_reg.jal := io.i_jal
+    out_reg.jalr := io.i_jalr
+    out_reg.ebreak := io.i_ebreak
+    out_reg.fence_i := io.i_fence_i
+    out_reg.csr_addr := io.i_csr_addr
+  }.elsewhen(io.i_post_ready && !io.out.post_valid) {
+    out_reg := 0.U.asTypeOf(new IDU_EXU_OUT)
   }
-
-  io.o_pc := oRegs.o_pc
-  io.o_src1 := oRegs.o_src1
-  io.o_src2 := oRegs.o_src2
-  io.o_imm := oRegs.o_imm
-  io.o_src_sel1 := oRegs.o_src_sel1
-  io.o_src_sel2 := oRegs.o_src_sel2
-  io.o_rd := oRegs.o_rd
-  io.o_exu_opt := oRegs.o_exu_opt
-  io.o_alu_opt := oRegs.o_alu_opt
-  io.o_wen := oRegs.o_wen
-  io.o_csr_wen := oRegs.o_csr_wen
-  io.o_mret := oRegs.o_mret
-  io.o_ecall := oRegs.o_ecall
-  io.o_load := oRegs.o_load
-  io.o_store := oRegs.o_store
-  io.o_brch := oRegs.o_brch
-  io.o_jal := oRegs.o_jal
-  io.o_jalr := oRegs.o_jalr
-  io.o_ebreak := oRegs.o_ebreak
-  io.o_fence_i := oRegs.o_fence_i
-  io.o_csr_addr := oRegs.o_csr_addr
+  
+  io.out <> out_reg
 }

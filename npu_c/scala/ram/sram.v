@@ -2,63 +2,63 @@ module ram_simulation #(
     parameter                           ADDR_WIDTH = 32            ,
     parameter                           DATA_WIDTH = 32            ,
     parameter                           LATENCY = 2                 
-)(
-    output             [  ADDR_WIDTH-1:0]SRAM_AWADDR                ,
-    output                              SRAM_AWVALID               ,
-    input                               SRAM_AWREADY               ,
-    output             [   3:0]         SRAM_AWID                  ,
-    output             [   7:0]         SRAM_AWLEN                 ,
-    output             [   2:0]         SRAM_AWSIZE                ,
-    output             [   1:0]         SRAM_AWBURST               ,
-    output             [  DATA_WIDTH-1:0]SRAM_WDATA                 ,
-    output             [   3:0]         SRAM_WSTRB                 ,
-    output                              SRAM_WVALID                ,
-    input                               SRAM_WREADY                ,
-    output                              SRAM_WLAST                 ,
-    input              [   1:0]         SRAM_BRESP                 ,
-    input                               SRAM_BVALID                ,
-    output                              SRAM_BREADY                ,
-    input              [   3:0]         SRAM_BID                   ,
-    output             [  ADDR_WIDTH-1:0]SRAM_ARADDR                ,
-    output             [   3:0]         SRAM_ARID                  ,
-    output                              SRAM_ARVALID               ,
-    input                               SRAM_ARREADY               ,
-    output             [   7:0]         SRAM_ARLEN                 ,
-    output             [   2:0]         SRAM_ARSIZE                ,
-    output             [   1:0]         SRAM_ARBURST               ,
-    input              [  DATA_WIDTH-1:0]SRAM_RDATA                 ,
-    input              [   1:0]         SRAM_RRESP                 ,
-    input                               SRAM_RVALID                ,
-    output                              SRAM_RREADY                ,
-    input              [   3:0]         SRAM_RID                   ,
-    input                               SRAM_RLAST                  
-);
+        )(
+    input           [  ADDR_WIDTH-1:0]                  SRAM_AWADDR ,
+    input                                               SRAM_AWVALID    ,
+    output                                              SRAM_AWREADY    ,
+    input           [   3:0]                            SRAM_AWID   ,
+    input           [   7:0]                            SRAM_AWLEN  ,
+    input           [   2:0]                            SRAM_AWSIZE ,
+    input           [   1:0]                            SRAM_AWBURST    ,
+    input           [  DATA_WIDTH-1:0]                  SRAM_WDATA  ,
+    input           [   3:0]                            SRAM_WSTRB  ,
+    input                                               SRAM_WVALID ,
+    output                                              SRAM_WREADY ,
+    input                                               SRAM_WLAST  ,
+    output          [   1:0]                            SRAM_BRESP  ,
+    output                                              SRAM_BVALID ,
+    input                                               SRAM_BREADY ,
+    output          [   3:0]                            SRAM_BID    ,
+    input           [  ADDR_WIDTH-1:0]                  SRAM_ARADDR ,
+    input           [   3:0]                            SRAM_ARID   ,
+    input                                               SRAM_ARVALID    ,
+    output                                              SRAM_ARREADY    ,
+    input           [   7:0]                            SRAM_ARLEN  ,
+    input           [   2:0]                            SRAM_ARSIZE ,
+    input           [   1:0]                            SRAM_ARBURST    ,
+    output          [  DATA_WIDTH-1:0]                  SRAM_RDATA  ,
+    output          [   1:0]                            SRAM_RRESP  ,
+    output                                              SRAM_RVALID ,
+    input                                               SRAM_RREADY ,
+    output          [   3:0]                            SRAM_RID    ,
+    output                                              SRAM_RLAST  
+        );
 
 import "DPI-C" function void npc_pmem_read (input int raddr, output int rdata, input bit ren, input int len);
 import "DPI-C" function void npc_pmem_write (input int waddr, input int wdata, input bit wen, input int len);
 
 // AXI4LITE signals
-reg                    [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0]axi_awaddr                 ;
-reg                                     axi_awready                ;
-reg                                     axi_wready                 ;
-reg                    [   1:0]         axi_bresp                  ;
-reg                                     axi_bvalid                 ;
-reg                    [`ysyx_23060124_ISA_ADDR_WIDTH-1 : 0]axi_araddr                 ;
-reg                                     axi_arready                ;
-reg                    [`ysyx_23060124_ISA_WIDTH-1 : 0]axi_rdata                  ;
-reg                    [   1:0]         axi_rresp                  ;
-reg                                     axi_rvalid                 ;
+    reg             [ADDR_WIDTH-1 : 0]                  axi_awaddr  ;
+    reg                                                 axi_awready ;
+    reg                                                 axi_wready  ;
+    reg             [   1:0]                            axi_bresp   ;
+    reg                                                 axi_bvalid  ;
+    reg             [ADDR_WIDTH-1 : 0]                  axi_araddr  ;
+    reg                                                 axi_arready ;
+    reg             [DATA_WIDTH-1 : 0]                  axi_rdata   ;
+    reg             [   1:0]                            axi_rresp   ;
+    reg                                                 axi_rvalid  ;
 
 //----------------------------------------------
 //-- Signals for user logic register space example
 //------------------------------------------------
 //-- Number of Slave Registers 4
-reg [`ysyx_23060124_ISA_WIDTH-1:0]	slv_reg0;
-wire	 slv_reg_rden;
-wire	 slv_reg_wren;
-wire [`ysyx_23060124_ISA_WIDTH-1:0]	 reg_data_out;
-integer	 byte_index;
-reg	 aw_en;
+    reg             [DATA_WIDTH-1:0]                    slv_reg0    ;
+    wire                                                slv_reg_rden    ;
+    wire                                                slv_reg_wren    ;
+    wire            [DATA_WIDTH-1:0]                    reg_data_out    ;
+    integer                                             byte_index  ;
+    reg                                                 aw_en   ;
 
 // I/O Connections assignments
 

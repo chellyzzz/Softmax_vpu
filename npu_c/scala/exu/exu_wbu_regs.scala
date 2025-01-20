@@ -1,11 +1,12 @@
+package cpu
+
 import chisel3._
 import chisel3.util._
-import parameter.Parameter._
+import parameters.Parameter
 
-class EXU_WBU_Regs extends Module {
+
+class EXU_WBU_Regs extends Module with Parameter {
   val io = IO(new Bundle {
-    val clock       = Input(Clock())
-    val reset       = Input(Bool())
     val i_brch      = Input(Bool())
     val i_jal       = Input(Bool())
     val i_wen       = Input(Bool())
@@ -17,10 +18,10 @@ class EXU_WBU_Regs extends Module {
     val i_res       = Input(UInt(DataWidth.W))
     val i_pc_next   = Input(UInt(DataWidth.W))
     val i_csr_addr  = Input(UInt(12.W))
-    val i_rd_addr   = Input(UInt(4.W))
+    val i_rd_addr   = Input(UInt(RegAddrWidth.W))
     val o_pc_next   = Output(UInt(DataWidth.W))
     val o_csr_addr  = Output(UInt(12.W))
-    val o_rd_addr   = Output(UInt(4.W))
+    val o_rd_addr   = Output(UInt(RegAddrWidth.W))
     val o_wen       = Output(Bool())
     val o_csr_wen   = Output(Bool())
     val o_brch      = Output(Bool())
@@ -37,7 +38,7 @@ class EXU_WBU_Regs extends Module {
   // Default reset values
   val o_pc_next    = RegInit(0.U(DataWidth.W))
   val o_csr_addr   = RegInit(0.U(12.W))
-  val o_rd_addr    = RegInit(0.U(4.W))
+  val o_rd_addr    = RegInit(0.U(RegAddrWidth.W))
   val o_wen        = RegInit(false.B)
   val o_csr_wen    = RegInit(false.B)
   val o_brch       = RegInit(false.B)
@@ -48,20 +49,7 @@ class EXU_WBU_Regs extends Module {
   val o_res        = RegInit(0.U(DataWidth.W))
   val o_ebreak     = RegInit(false.B)
 
-  when(io.reset.asBool) {
-    o_pc_next   := 0.U
-    o_csr_addr  := 0.U
-    o_rd_addr   := 0.U
-    o_wen       := false.B
-    o_csr_wen   := false.B
-    o_brch      := false.B
-    o_jal       := false.B
-    o_jalr      := false.B
-    o_mret      := false.B
-    o_ecall     := false.B
-    o_res       := 0.U
-    o_ebreak    := false.B
-  }.elsewhen(io.i_post_ready && io.o_post_valid) {
+  when(io.i_post_ready && io.o_post_valid) {
     o_pc_next   := io.i_pc_next
     o_csr_addr  := io.i_csr_addr
     o_rd_addr   := io.i_rd_addr

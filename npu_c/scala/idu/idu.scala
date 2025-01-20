@@ -1,165 +1,207 @@
+package cpu
+
 import chisel3._
 import chisel3.util._
-import parameter.Parameter._
+import parameters.Parameter
 
-class EXU extends Module {
+class IDU extends Module with Parameter {
   val io = IO(new Bundle {
-    val clock       = Input(Clock())
-    val reset       = Input(Bool())
+    val ins         = Input(UInt(32.W))
+    val o_imm       = Output(UInt(32.W))
+    val o_rd        = Output(UInt(RegAddrWidth.W))
+    val o_rs1       = Output(UInt(RegAddrWidth.W))
+    val o_rs2       = Output(UInt(RegAddrWidth.W))
+    val o_csr_addr  = Output(UInt(12.W))
+    val o_exu_opt   = Output(UInt(3.W))
+    val o_alu_opt   = Output(UInt(10.W))
+    val o_wen       = Output(Bool())
+    val o_csr_wen   = Output(Bool())
+    val o_src_sel1  = Output(UInt(2.W))
+    val o_src_sel2  = Output(UInt(3.W))
 
-    val i_src1      = Input(UInt(DataWidth.W))
-    val i_src2      = Input(UInt(DataWidth.W))
-    val i_pc        = Input(UInt(DataWidth.W))
-    val i_imm       = Input(UInt(DataWidth.W))
-    val i_src_sel1  = Input(UInt(2.W))
-    val i_src_sel2  = Input(UInt(3.W))
-
-    val i_load      = Input(Bool())
-    val i_store     = Input(Bool())
-    val i_brch      = Input(Bool())
-    val i_jal       = Input(Bool())
-    val i_jalr      = Input(Bool())
-    val i_ecall     = Input(Bool())
-    val i_mret      = Input(Bool())
-    val i_alu_opt   = Input(UInt(10.W))
-    val exu_opt     = Input(UInt(3.W))
-
-    val o_res       = Output(UInt(DataWidth.W))
+    val o_mret      = Output(Bool())
+    val o_ecall     = Output(Bool())
+    val o_load      = Output(Bool())
+    val o_store     = Output(Bool())
     val o_brch      = Output(Bool())
-    val o_pc_next   = Output(UInt(DataWidth.W))
-
-    val M_AXI_AWADDR = Output(UInt(DataWidth.W))
-    val M_AXI_AWVALID = Output(Bool())
-    val M_AXI_AWREADY = Input(Bool())
-    val M_AXI_AWLEN = Output(UInt(8.W))
-    val M_AXI_AWSIZE = Output(UInt(3.W))
-    val M_AXI_AWBURST = Output(UInt(2.W))
-    val M_AXI_AWID = Output(UInt(4.W))
-
-    val M_AXI_WVALID = Output(Bool())
-    val M_AXI_WREADY = Input(Bool())
-    val M_AXI_WDATA = Output(UInt(DataWidth.W))
-    val M_AXI_WSTRB = Output(UInt(4.W))
-    val M_AXI_WLAST = Output(Bool())
-
-    val M_AXI_RDATA = Input(UInt(DataWidth.W))
-    val M_AXI_RRESP = Input(UInt(2.W))
-    val M_AXI_RVALID = Input(Bool())
-    val M_AXI_RREADY = Output(Bool())
-    val M_AXI_RID = Input(UInt(4.W))
-    val M_AXI_RLAST = Input(Bool())
-
-    val M_AXI_ARADDR = Output(UInt(DataWidth.W))
-    val M_AXI_ARVALID = Output(Bool())
-    val M_AXI_ARREADY = Input(Bool())
-    val M_AXI_ARID = Output(UInt(4.W))
-    val M_AXI_ARLEN = Output(UInt(8.W))
-    val M_AXI_ARSIZE = Output(UInt(3.W))
-    val M_AXI_ARBURST = Output(UInt(2.W))
-
-    val M_AXI_BRESP = Input(UInt(2.W))
-    val M_AXI_BVALID = Input(Bool())
-    val M_AXI_BREADY = Output(Bool())
-    val M_AXI_BID = Input(UInt(4.W))
-
-    val i_post_ready = Input(Bool())
-    val i_pre_valid = Input(Bool())
-    val o_post_valid = Output(Bool())
-    val o_pre_ready = Output(Bool())
+    val o_jal       = Output(Bool())
+    val o_jalr      = Output(Bool())
+    val o_ebreak    = Output(Bool())
+    val o_fence_i   = Output(Bool())
   })
 
-  // Parameters
-  val BEQ   = "b000".U(3.W)
-  val BNE   = "b001".U(3.W)
-  val BLT   = "b010".U(3.W)
-  val BGE   = "b011".U(3.W)
-  val BLTU  = "b100".U(3.W)
-  val BGEU  = "b101".U(3.W)
+  /************************parameter**********************/
+  // TYPE_R_FUN3
+  val ADD         = "b000".U(3.W)
+  val SUB         = "b000".U(3.W)
+  val SLL         = "b001".U(3.W)
+  val SLT         = "b010".U(3.W)
+  val SLTU        = "b011".U(3.W)
+  val XOR         = "b100".U(3.W)
+  val SRL_SRA     = "b101".U(3.W)
+  val OR          = "b110".U(3.W)
+  val AND         = "b111".U(3.W)
 
-  // Internal wires and registers
-  val alu_res = Wire(UInt(DataWidth.W))
-  val load_res = Wire(UInt(DataWidth.W))
-  val if_lsu = io.i_load || io.i_store
+  // ALU Operations
+  val ALU_ADD     = "d1".U(10.W)
+  val ALU_SUB     = "d2".U(10.W)
+  val ALU_SLL     = "d4".U(10.W)
+  val ALU_SLT     = "d8".U(10.W)
+  val ALU_SLTU    = "d16".U(10.W)
+  val ALU_XOR     = "d32".U(10.W)
+  val ALU_SRL     = "d64".U(10.W)
+  val ALU_SRA     = "d512".U(10.W)
+  val ALU_OR      = "d128".U(10.W)
+  val ALU_AND     = "d256".U(10.W)
 
-  val post_valid = RegInit(false.B)
-  io.o_post_valid := Mux(if_lsu, (io.M_AXI_RLAST && io.M_AXI_RREADY) || io.M_AXI_BREADY, post_valid)
-  io.o_pre_ready := Mux(if_lsu, (io.M_AXI_RLAST && io.M_AXI_RREADY) || io.M_AXI_BREADY, true.B)
+  // EXU_SRC_SEL
+  val EXU_SEL_REG = "b0001".U(4.W)
+  val EXU_SEL_IMM = "b0010".U(4.W)
+  val EXU_SEL_PC4 = "b0100".U(4.W)
+  val EXU_SEL_PCI = "b1000".U(4.W)
 
-  when(io.reset) {
-    post_valid := false.B
-  }.otherwise {
-    post_valid := io.i_pre_valid
-  }
+  val SEL1_REG    = "b01".U(2.W)
+  val SEL1_PC     = "b10".U(2.W)
 
-  // ALU source selection
-  val alu_src1 = Wire(UInt(DataWidth.W))
-  alu_src1 := Mux(io.i_src_sel1(0), io.i_src1, io.i_pc)
+  val SEL2_REG    = "b001".U(3.W)
+  val SEL2_IMM    = "b010".U(3.W)
+  val SEL2_4      = "b100".U(3.W)
 
-  val alu_src2 = Wire(UInt(DataWidth.W))
-  alu_src2 := MuxLookup(io.i_src_sel2, 0.U, Seq(
-    "b001".U -> io.i_src2,
-    "b010".U -> io.i_imm,
-    "b100".U -> 4.U
+  // Instruction Types
+  val TYPE_I      = "b0010011".U(7.W)
+  val TYPE_I_LOAD = "b0000011".U(7.W)
+  val TYPE_JALR   = "b1100111".U(7.W)
+  val TYPE_EBRK   = "b1110011".U(7.W)
+  val TYPE_S      = "b0100011".U(7.W)
+  val TYPE_R      = "b0110011".U(7.W)
+  val TYPE_AUIPC  = "b0010111".U(7.W)
+  val TYPE_LUI    = "b0110111".U(7.W)
+  val TYPE_JAL    = "b1101111".U(7.W)
+  val TYPE_B      = "b1100011".U(7.W)
+  val TYPE_FENCE  = "b0001111".U(7.W)
+
+  // TYPE_I_FUN3
+  val FUN3_SRL_SRA = "b101".U(3.W)
+
+  // CSRR
+  val FUN3_CSRRW = "b001".U(3.W)
+  val FUN3_CSRRS = "b010".U(3.W)
+  val FUN3_EXCPT = "b000".U(3.W)
+
+  // TYPE_EXCPT_RS2
+  val RS2_ECALL = "b00000".U(5.W)
+  val RS2_MRET  = "b00010".U(5.W)
+
+  // Extract fields from the instruction
+  val func3    = io.ins(14, 12)
+  val opcode   = io.ins(6, 0)
+  val func7    = io.ins(31, 25)
+  val rs1      = io.ins(19, 15)
+  val rs2      = io.ins(24, 20)
+  val rd       = io.ins(11, 7)
+
+  // Condition signals
+  val TYPEI      = (opcode === TYPE_I)
+  val TYPEI_LOAD = (opcode === TYPE_I_LOAD)
+  val TYPER      = (opcode === TYPE_R)
+  val TYPELUI    = (opcode === TYPE_LUI)
+  val TYPEAUIPC  = (opcode === TYPE_AUIPC)
+  val TYPEJAL    = (opcode === TYPE_JAL)
+  val TYPEJALR   = (opcode === TYPE_JALR)
+  val TYPES      = (opcode === TYPE_S)
+  val TYPEB      = (opcode === TYPE_B)
+  val TYPEEBRK   = (opcode === TYPE_EBRK)
+  val TYPEFENCE  = (opcode === TYPE_FENCE)
+  
+  val CSRRS = (TYPEEBRK && func3 === FUN3_CSRRS)
+  val CSRRW = (TYPEEBRK && func3 === FUN3_CSRRW)
+
+  // Immediate generation
+  io.o_imm := Mux(TYPEI || TYPEI_LOAD, Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
+               Mux(TYPELUI || TYPEAUIPC, Cat(io.ins(31, 12), 0.U(12.W)),
+               Mux(TYPEJAL, Cat(Fill(12, io.ins(31)), io.ins(19, 12), io.ins(20), io.ins(30, 21), 0.U(1.W)),
+               Mux(TYPEJALR, Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
+               Mux(TYPEB, Cat(Fill(20, io.ins(31)), io.ins(7), io.ins(30, 25), io.ins(11, 8), 0.U(1.W)),
+               Mux(TYPES, Cat(Fill(20, io.ins(31)), io.ins(31, 25), io.ins(11, 7)),
+               0.U(32.W)))))))
+
+  // Other signals
+  io.o_rd    := rd
+  io.o_rs1   := Mux(TYPEAUIPC || TYPELUI || TYPEJAL, 0.U(RegAddrWidth.W), rs1)
+  io.o_rs2   := Mux(TYPER || TYPEB || TYPES, rs2, 0.U(RegAddrWidth.W))
+  
+  io.o_csr_addr := Mux(TYPEEBRK, io.ins(31, 20), 0.U(12.W))
+  
+  io.o_wen := Mux(TYPES || TYPEB || TYPEFENCE, false.B, true.B)
+  io.o_csr_wen := CSRRS || CSRRW
+  
+  // Unsigned check logic
+  val o_if_unsigned = (TYPEI && func3 === "b101".U && func7(5)) || 
+                       (TYPER && func3 === "b101".U && func7(5)) || 
+                       (TYPER && func3 === "b000".U && func7(5)) 
+                       
+  io.o_exu_opt := func3
+  
+  val exu_opt = Mux(TYPEB, Cat("b0".U(1.W), func3(2, 1)), func3)
+
+  // ALU Operation Selection
+  io.o_alu_opt := Mux((TYPES || TYPEI_LOAD || TYPELUI || TYPEAUIPC || TYPEJAL), ALU_ADD,
+                       Mux(CSRRS, ALU_OR, 
+                       Mux(CSRRW, ALU_ADD, 
+                       Mux(exu_opt === "b000".U && !o_if_unsigned, ALU_ADD,
+                       Mux(exu_opt === "b000".U && o_if_unsigned, ALU_SUB,
+                       Mux(exu_opt === "b001".U, ALU_SLL,
+                       Mux(exu_opt === "b010".U, ALU_SLT,
+                       Mux(exu_opt === "b011".U, ALU_SLTU,
+                       Mux(exu_opt === "b100".U, ALU_XOR,
+                       Mux(exu_opt === "b101".U && o_if_unsigned, ALU_SRL,
+                       Mux(exu_opt === "b101".U && !o_if_unsigned, ALU_SRA,
+                       Mux(exu_opt === "b110".U, ALU_OR,
+                       Mux(exu_opt === "b111".U, ALU_AND, ALU_ADD)))))))))))))
+
+  // src_sel1 assignment
+  io.o_src_sel1 := MuxCase(0.U(2.W), Seq(
+    (opcode === TYPE_I)       -> SEL1_REG,
+    (opcode === TYPE_R)       -> SEL1_REG,
+    (opcode === TYPE_LUI)     -> SEL1_REG,
+    (opcode === TYPE_AUIPC)   -> SEL1_PC,
+    (opcode === TYPE_JAL)     -> SEL1_PC,
+    (opcode === TYPE_JALR)    -> SEL1_PC,
+    (opcode === TYPE_I_LOAD)  -> SEL1_REG,
+    (opcode === TYPE_S)       -> SEL1_REG,
+    (opcode === TYPE_B)       -> SEL1_REG,
+    (opcode === "b1110011".U && func3 === "b001".U) -> SEL1_REG,  // CSR
+    (opcode === "b1110011".U && func3 === "b010".U) -> SEL1_REG   // CSR
   ))
 
-  // PC next calculation
-  io.o_pc_next := MuxCase(io.i_pc + 4.U, Seq(
-    (io.i_jal) -> (io.i_pc + io.i_imm),
-    (io.i_jalr) -> (io.i_src1 + io.i_imm),
-    (io.i_brch) -> (io.i_pc + io.i_imm),
-    (io.i_ecall) -> io.i_src1,
-    (io.i_mret) -> io.i_src1
+  // src_sel2 assignment
+  io.o_src_sel2 := MuxCase(0.U(3.W), Seq(
+    (opcode === TYPE_I)       -> SEL2_IMM,
+    (opcode === TYPE_R)       -> SEL2_REG,
+    (opcode === TYPE_LUI)     -> SEL2_IMM,
+    (opcode === TYPE_AUIPC)   -> SEL2_IMM,
+    (opcode === TYPE_JAL)     -> SEL2_4,
+    (opcode === TYPE_JALR)    -> SEL2_4,
+    (opcode === TYPE_I_LOAD)  -> SEL2_IMM,
+    (opcode === TYPE_S)       -> SEL2_IMM,
+    (opcode === TYPE_B)       -> SEL2_REG,
+    (opcode === "b1110011".U && func3 === "b001".U) -> SEL2_IMM,  // CSR
+    (opcode === "b1110011".U && func3 === "b010".U) -> SEL2_REG   // CSR
   ))
 
-  // ALU instance
-  val alu = Module(new ALU)
-  alu.io.src1 := alu_src1
-  alu.io.src2 := alu_src2
-  alu.io.opt := io.i_alu_opt
-  alu_res := alu.io.res
+  // ecall and mret assignments
+  io.o_ecall := (opcode === TYPE_EBRK) && (func3 === "b000".U) && (rs2(1, 0) === "b00".U)
+  io.o_mret  := (opcode === TYPE_EBRK) && (func3 === "b000".U) && (rs2(1, 0) === "b10".U)
 
-  // LSU instance
-  val lsu = Module(new LSU)
-  lsu.io.clock := io.clock
-  lsu.io.reset := io.reset
-  lsu.io.store_src := io.i_src2
-  lsu.io.alu_res := alu_res
-  lsu.io.exu_opt := io.exu_opt
-  lsu.io.load_res := load_res
-  lsu.io.i_load := io.i_load
-  lsu.io.i_store := io.i_store
+  // Load, store, branch, jump control signals
+  io.o_load  := (opcode === TYPE_I_LOAD)
+  io.o_store := (opcode === TYPE_S)
+  io.o_brch  := (opcode === TYPE_B)
+  io.o_jal   := (opcode === TYPE_JAL)
+  io.o_jalr  := (opcode === TYPE_JALR)
 
-  io.M_AXI_AWADDR := lsu.io.M_AXI_AWADDR
-  io.M_AXI_AWVALID := lsu.io.M_AXI_AWVALID
-  io.M_AXI_AWLEN := lsu.io.M_AXI_AWLEN
-  io.M_AXI_AWSIZE := lsu.io.M_AXI_AWSIZE
-  io.M_AXI_AWBURST := lsu.io.M_AXI_AWBURST
-  io.M_AXI_AWID := lsu.io.M_AXI_AWID
-  io.M_AXI_WVALID := lsu.io.M_AXI_WVALID
-  io.M_AXI_WDATA := lsu.io.M_AXI_WDATA
-  io.M_AXI_WSTRB := lsu.io.M_AXI_WSTRB
-  io.M_AXI_WLAST := lsu.io.M_AXI_WLAST
-  io.M_AXI_RREADY := lsu.io.M_AXI_RREADY
-  io.M_AXI_ARADDR := lsu.io.M_AXI_ARADDR
-  io.M_AXI_ARVALID := lsu.io.M_AXI_ARVALID
-  io.M_AXI_ARLEN := lsu.io.M_AXI_ARLEN
-  io.M_AXI_ARSIZE := lsu.io.M_AXI_ARSIZE
-  io.M_AXI_ARBURST := lsu.io.M_AXI_ARBURST
-  io.M_AXI_BREADY := lsu.io.M_AXI_BREADY
+  // Fence and ebreak control signals
+  io.o_fence_i := (opcode === TYPE_FENCE) && (func3 === "b001".U)
+  io.o_ebreak   := (opcode === TYPE_EBRK) && (func3 === "b000".U) && (rs2(1, 0) === "b01".U)
 
-  // Branch logic
-  val beq = alu_src1 === alu_src2
-  val bne = !beq
-  val brch_res = Wire(Bool())
-  brch_res := MuxLookup(io.exu_opt, false.B, Seq(
-    BEQ -> beq,
-    BNE -> bne,
-    BLT -> alu_res(0),
-    BGE -> !alu_res(0),
-    BLTU -> alu_res(0),
-    BGEU -> !alu_res(0)
-  ))
-
-  io.o_res := Mux(io.i_load, load_res, alu_res)
-  io.o_brch := io.i_brch && brch_res
 }
