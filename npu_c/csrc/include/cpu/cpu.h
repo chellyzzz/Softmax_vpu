@@ -19,7 +19,7 @@
 #include <common.h>
 #include "verilated.h"
 #include "verilated_vcd_c.h"
-#include "VysyxSoCFull.h"
+#include "Vtop.h"
 
 void cpu_exec(uint64_t n);
 
@@ -29,7 +29,7 @@ void invalid_inst(vaddr_t thispc);
 
 int hit_goodtrap();
 bool if_end();
-void verilator_sync_init(VerilatedContext* contextp_sdb, VysyxSoCFull* top_sdb, VerilatedVcdC* vcd_sdb);
+void verilator_sync_init(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb);
 
 #ifdef CONFIG_FTRACE
 typedef struct functab_node
@@ -44,6 +44,5 @@ extern functab_node* functab_head;
 
 #define NEMUTRAP(thispc, code) set_nemu_state(NEMU_END, thispc, code)
 #define INV(thispc) invalid_inst(thispc)
-
 
 #endif

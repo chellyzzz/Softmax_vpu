@@ -22,21 +22,8 @@
 #include <memory/paddr.h>
 
 
-static int is_batch_mode = false;
+static int is_batch_mode = true;
 bool wave_enable = true;
-void init_regex();
-#ifdef CONFIG_WP
-void init_wp_pool();
-void wp_display();
-void wp_create(char *args, word_t res);
-void wp_delete(int num);
-
-#else 
-void init_wp_pool() {};
-void wp_display() {};
-void wp_create(char *args, word_t res) {};
-void wp_delete(int num) {};
-#endif
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -325,7 +312,6 @@ void sdb_set_batch_mode() {
 void assert_fail_msg() {
   #ifdef CONFIG_ITRACE  
     if(!hit_goodtrap()){
-      iringbuf_print();
       IFDEF(CONFIG_MTRACE, print_out_of_bound());
       isa_reg_display();
       isa_csr_display();
@@ -333,7 +319,7 @@ void assert_fail_msg() {
   #endif
 }
 
-int sdb_mainloop(VerilatedContext* contextp_sdb, VysyxSoCFull* top_sdb, VerilatedVcdC* vcd_sdb) {
+int sdb_mainloop(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb) {
   //pass parameters to global variables
   verilator_sync_init(contextp_sdb, top_sdb, vcd_sdb);
 
@@ -359,11 +345,6 @@ int sdb_mainloop(VerilatedContext* contextp_sdb, VysyxSoCFull* top_sdb, Verilate
       args = NULL;
     }
 
-#ifdef CONFIG_DEVICE
-    extern void sdl_clear_event_queue();
-    sdl_clear_event_queue();
-#endif
-
     int i;
     for (i = 0; i < NR_CMD; i ++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
@@ -380,12 +361,4 @@ int sdb_mainloop(VerilatedContext* contextp_sdb, VysyxSoCFull* top_sdb, Verilate
   //should not reach here;
   assert(0);
   return 0;
-}
-
-void init_sdb() {
-  /* Compile the regular expressions. */
-  init_regex();
-
-  /* Initialize the watchpoint pool. */
-  init_wp_pool();
 }

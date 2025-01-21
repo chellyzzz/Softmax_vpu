@@ -11,15 +11,15 @@ class CpuCore extends Module with Parameter {
   val io = IO(new Bundle {
     // AXI4 Master Interface
     val io_master = new axi_master
+    val data = Output(UInt(32.W))
     // val io_slave  = new axi_slave
   })
-
+  
   // Local constants for parameters
   val CSR_ADDR = 12
 
   // Define various signal types
   val imm = Wire(UInt(DataWidth.W))
-  val ins = Wire(UInt(DataWidth.W))
   val idu_addr_rs1 = Wire(UInt(RegAddrWidth.W))
   val idu_addr_rs2 = Wire(UInt(RegAddrWidth.W))
   val idu_addr_rd = Wire(UInt(RegAddrWidth.W))
@@ -62,10 +62,8 @@ class CpuCore extends Module with Parameter {
   val exu2idu_ready = Wire(Bool())
   val exu2wbu_valid = Wire(Bool())
   val wbu2exu_ready = Wire(Bool())
-  val icache_ins = Wire(UInt(DataWidth.W))
-  val ifu_req_addr = Wire(UInt(DataWidth.W))
-  val icache_hit = Wire(Bool())
-  val fence_i = Wire(Bool())
+  val ifu_req_addr  = Wire(UInt(DataWidth.W))
+  val fence_i       = Wire(Bool())
 
   val  wbu_rd_addr          = Wire(UInt(RegAddrWidth.W)) 
   val  wbu_csr_addr         = Wire(UInt(12.W)) 
@@ -140,39 +138,37 @@ class CpuCore extends Module with Parameter {
   mtvec := Csrs.io.o_mtvec
 
 
-  val icache = Module(new ICache)
-  val xbar = Module(new Xbar)
+  val icache = Module(new ICache(ADDR_WIDTH = 32, DATA_WIDTH = 32, CACHE_SIZE = 16, WAY_NUMS = 2, BYTES_NUMS = 8))
+  val xbar    = Module(new Xbar)
 
-  icache.io.addr := ifu_req_addr
-  icache_ins  := icache.io.data
-  icache_hit  := icache.io.hit
+  icache.io.addr    := ifu_req_addr
   icache.io.fence_i := fence_i
   icache.io.ifu <> xbar.io.ifu
+  icache.io.ifu.AXI_RDATA := xbar.io.ifu.AXI_RDATA
 
   val ifu = Module(new IFU)
-  ifu.io.i_pc_next := pc_next
-  ifu.io.i_pc_update := pc_update_en
-  ins := ifu.io.ins
+  ifu.io.i_pc_next    := pc_next
+  ifu.io.i_pc_update  := pc_update_en
   ifu.io.i_post_ready := idu2ifu_ready
-  ifu_pc_next := ifu.io.pc_next 
-  ifu.io.hit := icache_hit
-  ifu.io.icache_ins := icache_ins
-  ifu_req_addr := ifu.io.req_addr
+  ifu_pc_next         := ifu.io.pc_next 
+  ifu.io.hit          := icache.io.hit
+  ifu_req_addr        := ifu.io.req_addr
+  io.data := ~icache.io.data
 
   val ifu2idu_regs = withReset( reset.asBool | pc_update_en | idu2exu_fence_i){
     Module(new IFU2IDURegs)
   }
-  ifu2idu_regs.io.i_pc := ifu_pc_next
-  ifu2idu_pc :=  ifu2idu_regs.io.o_pc
-  ifu2idu_regs.io.i_ins :=  ins 
-  ifu2idu_ins := ifu2idu_regs.io.o_ins 
-  ifu2idu_regs.io.icache_hit := icache_hit
-  ifu2idu_regs.io.i_pre_valid := pc_update_en
-  ifu2idu_regs.io.i_post_ready := idu2ifu_ready
-  ifu2idu_valid := ifu2idu_regs.io.o_post_valid
+  ifu2idu_regs.io.i_pc          := ifu_pc_next
+  ifu2idu_pc                    := ifu2idu_regs.io.o_pc
+  ifu2idu_regs.io.i_ins         := icache.io.data 
+  ifu2idu_ins                   := ifu2idu_regs.io.o_ins 
+  ifu2idu_regs.io.i_icache_hit  := icache.io.hit
+  ifu2idu_regs.io.i_pre_valid   := pc_update_en
+  ifu2idu_regs.io.i_post_ready  := idu2ifu_ready
+  ifu2idu_valid                 := ifu2idu_regs.io.o_post_valid
 
   val idu1 = Module(new IDU)
-  idu1.io.ins := ifu2idu_ins  
+  idu1.io.ins   :=  ifu2idu_ins  
   imm           :=  idu1.io.o_imm      
   idu_addr_rd   :=  idu1.io.o_rd       
   idu_addr_rs1  :=  idu1.io.o_rs1      

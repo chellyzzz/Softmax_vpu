@@ -1,20 +1,16 @@
-#include <VysyxSoCFull.h>
+#include <Vtop.h>
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 #include <common.h>
 #include <isa.h>
 #include <memory/paddr.h>
 
-#ifdef CONFIG_NVBOARD
-#include <nvboard.h>
-void nvboard_bind_all_pins(VysyxSoCFull* top);
-#endif
 
 void init_monitor(int, char *[]);
-int sdb_mainloop(VerilatedContext* contextp_sdb, VysyxSoCFull* top_sdb, VerilatedVcdC* vcd_sdb);
+int sdb_mainloop(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb);
 
 VerilatedContext* contextp = new VerilatedContext;  
-VysyxSoCFull* top =new VysyxSoCFull{contextp};  
+Vtop* top =new Vtop{contextp};  
 VerilatedVcdC* vcd = new VerilatedVcdC;
 
 void init_trace(){
@@ -57,12 +53,7 @@ int main(int argc,char *argv[]){
         printf("sorry but no argc\n;");
     }
     Verilated::commandArgs(argc,argv);
-    #ifdef CONFIG_NVBOARD
-    nvboard_bind_all_pins(top);
-    nvboard_init();
-    #endif
-    init_trace();
-
+    // init_trace();
     init_monitor(argc, argv);
     int good = sdb_mainloop(contextp, top, vcd);
     end_wave();

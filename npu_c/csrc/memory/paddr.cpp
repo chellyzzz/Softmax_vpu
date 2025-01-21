@@ -39,18 +39,6 @@ uint8_t* guest_to_host(paddr_t paddr) {
   if (in_pmem(paddr)) {
     return pmem + paddr - CONFIG_MBASE;
   }
-  else if(in_mrom(paddr)) {
-    return mrom + paddr - MROM_BASE;
-  }
-  else if(in_sram(paddr)) {
-    return sram + paddr - SRAM_BASE;
-  }
-  else if(in_flash(paddr)){
-    return flash + paddr - FLASH_BASE;
-  }
-  else if(in_psram(paddr)){
-    return psram + paddr - PSRAM_BASE;
-  }
   else {
     Log("paddr = " FMT_PADDR" is out of definition", paddr);
     return NULL;
@@ -68,31 +56,6 @@ static void out_of_bound(paddr_t addr) {
 static word_t pmem_read(paddr_t addr, int len) {
   word_t ret = host_read(guest_to_host(addr), len);
   return ret;
-}
-
-extern "C" void mrom_read(int32_t addr, int32_t *data) {
-    word_t ret = host_read(guest_to_host(addr), 4);
-    *data = ret;
-}
-
-extern "C" void flash_read(int32_t addr, int32_t *data) { 
-	  int align_addr = addr + FLASH_BASE;
-    word_t ret = host_read(guest_to_host(align_addr), 4);
-    *data = ret;
-}
-
-#define PSRAM_TEST 0x8ff0ffff
-extern "C" void psram_read(int32_t raddr, int32_t *rdata) { 
-	  int align_addr = raddr + PSRAM_BASE;
-    word_t ret = host_read(guest_to_host(align_addr), 4);
-    *rdata = ret;
-    if(align_addr >= PSRAM_TEST && align_addr <= PSRAM_TEST + 4) printf("psram_read: raddr = %x, rdata = %x\n", raddr, *rdata);
-}
-
-extern "C" void psram_write(int32_t waddr, int32_t wdata, int32_t wmask) {
-    int align_addr = waddr + PSRAM_BASE;
-    if(align_addr >= PSRAM_TEST && align_addr <= PSRAM_TEST + 4) printf("psram_write: waddr = %x, wdata = %x, wmask = %x\n", waddr, wdata, wmask/2);
-    host_write(guest_to_host(align_addr), wmask/2, wdata);
 }
 
 static void pmem_write(paddr_t addr, int len, word_t data) {
@@ -114,37 +77,6 @@ void init_mem() {
   Log("physical memory area [" FMT_PADDR ", " FMT_PADDR "]", PMEM_LEFT, PMEM_RIGHT);
 }
 
-void init_mrom() {
-  mrom = (uint8_t *)malloc(MROM_SIZE);
-  assert(mrom);
-  Log("mrom memory area [" FMT_PADDR ", " FMT_PADDR "]", MROM_BASE, MROM_BASE + MROM_SIZE);
-}
-
-void init_flash() {
-  flash = (uint8_t *)malloc(FLASH_SIZE);
-  assert(flash);
-  Log("flash memory area [" FMT_PADDR ", " FMT_PADDR "]", FLASH_BASE, FLASH_BASE + FLASH_SIZE);
-}
-
-void init_sram() {
-  sram = (uint8_t *)malloc(SRAM_SIZE);
-  assert(sram);
-  Log("sram memory area [" FMT_PADDR ", " FMT_PADDR "]", SRAM_BASE, SRAM_BASE + SRAM_SIZE);
-}
-
-// void init_sdram() {
-//   sdram = (uint8_t *)malloc(SDRAM_SIZE);
-//   assert(sdram);
-//   Log("sdram memory area [" FMT_PADDR ", " FMT_PADDR "]", SDRAM_BASE, SDRAM_BASE + SDRAM_SIZE);
-// }
-
-
-void init_psram() {
-  psram = (uint8_t *)malloc(PSRAM_SIZE);
-  assert(psram);
-  Log("psram memory area [" FMT_PADDR ", " FMT_PADDR "]", PSRAM_BASE, PSRAM_BASE + PSRAM_SIZE);
-}
-
 word_t paddr_read(paddr_t addr, int len) {
   word_t data;
   if (likely(in_pmem(addr))) {
@@ -162,7 +94,6 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  IFDEF(CONFIG_MTRACE, mtrace_push(addr, len, cpu.pc, true, data));
   if (likely(in_pmem(addr))) {
     pmem_write(addr, len, data); 
     return; 

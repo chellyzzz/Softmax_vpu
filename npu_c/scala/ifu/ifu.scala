@@ -10,13 +10,10 @@ class IFU extends Module with Parameter {
     val i_pc_next = Input(UInt(DataWidth.W))
     val i_pc_update = Input(Bool())
     val i_post_ready = Input(Bool())
-
-    val ins = Output(UInt(DataWidth.W))
     val pc_next = Output(UInt(DataWidth.W))
 
     // ifu_to_cache
     val req_addr = Output(UInt(DataWidth.W))
-    val icache_ins = Input(UInt(DataWidth.W))
     val hit = Input(Bool())
   })
 
@@ -25,14 +22,13 @@ class IFU extends Module with Parameter {
 
   // Output assignments
   io.req_addr := io.pc_next
-  io.ins := io.icache_ins
 
   val pc_next = RegInit(RESET_PC)
   
   // pc_next logic
   when(io.i_pc_update) {
     pc_next := io.i_pc_next
-  } .elsewhen(io.hit && io.i_post_ready) {
+  } .elsewhen(io.hit & io.i_post_ready) {
     pc_next := pc_next + 4.U
   } .otherwise {
     pc_next := pc_next

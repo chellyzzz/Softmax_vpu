@@ -20,9 +20,9 @@ class Xbar extends Module with Parameter {
     })
 
     val ifu_req = io.ifu.AXI_ARVALID
-    val lsu_req = io.lsu.AXI_AWVALID || io.lsu.AXI_ARVALID
-    val ifu_ram_finish = io.sram.AXI_RLAST && io.ifu.AXI_RREADY
-    val lsu_ram_finish = io.sram.AXI_BREADY || io.lsu.AXI_RREADY
+    val lsu_req = io.lsu.AXI_AWVALID | io.lsu.AXI_ARVALID
+    val ifu_ram_finish = io.sram.AXI_RLAST & io.ifu.AXI_RREADY
+    val lsu_ram_finish = io.sram.AXI_BREADY| io.lsu.AXI_RREADY
 
     val idle :: ifu_ram :: lsu_ram :: Nil = Enum(3)
     val state = RegInit(idle)
@@ -49,7 +49,8 @@ class Xbar extends Module with Parameter {
 
     io.ifu.AXI_ARREADY := Mux(state === ifu_ram, io.sram.AXI_ARREADY, false.B)
     io.ifu.AXI_RVALID := Mux(state === ifu_ram, io.sram.AXI_RVALID, false.B)
-    io.ifu.AXI_RDATA := Mux(state === ifu_ram, io.sram.AXI_RDATA, 0.U)
+    // io.ifu.AXI_RDATA := Mux(state === ifu_ram, io.sram.AXI_RDATA, 0.U)
+    io.ifu.AXI_RDATA := io.sram.AXI_RDATA
     io.ifu.AXI_RRESP := Mux(state === ifu_ram, io.sram.AXI_RRESP, 0.U)
     io.ifu.AXI_RLAST := Mux(state === ifu_ram, io.sram.AXI_RLAST, false.B)
     io.ifu.AXI_RID := Mux(state === ifu_ram, io.sram.AXI_RID, 0.U)

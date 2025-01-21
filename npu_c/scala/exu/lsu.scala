@@ -81,6 +81,14 @@ class LSU extends Module with Parameter {
   io.M_axi.AXI_RREADY := axi_rready
 
   // Transaction control
+  
+  val init_txn_ff2   = RegInit(false.B)
+  val init_txn_ff    = RegInit(false.B)
+  val init_txn_pulse = Mux(io.reset, 0.U, (!init_txn_ff2) && init_txn_ff)
+  val INIT_AXI_TXN   = Mux(io.reset, 0.U, (o_pre_ready_d1 && is_ls ? 1'b1 : 1'b0))
+  val is_ls = i_load  || i_store
+  val txn_pulse_load   = i_load  && init_txn_pulse
+  val txn_pulse_store  = i_store && init_txn_pulse  
   val initTxnPulse = io.oPreReady && (io.iLoad || io.iStore)
 
   when(io.iStore && initTxnPulse) {

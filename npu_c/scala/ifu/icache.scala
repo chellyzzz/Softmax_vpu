@@ -24,13 +24,14 @@ class ICache(val ADDR_WIDTH: Int = 32, val DATA_WIDTH: Int = 32, val CACHE_SIZE:
 
   // Registers
   val axi_arvalid = RegInit(false.B)
-  val axi_rready = RegInit(false.B)
-  val read_index = RegInit(0.U(RINDEX.W))
-  val araddr = RegInit(0.U((ADDR_WIDTH - OFFSET_BITS).W))
-  val idle = RegInit(true.B)
+  val axi_rready  = RegInit(false.B)
+  val read_index  = RegInit(0.U(RINDEX.W))
+  val araddr      = RegInit(0.U((ADDR_WIDTH - OFFSET_BITS).W))
+  val idle        = RegInit(true.B)
 
-  val cache_data = Reg(Vec(WAY_NUMS, Vec(BYTES_NUMS, UInt(DATA_WIDTH.W))))
-  val cache_tag = Reg(Vec(WAY_NUMS, UInt(TAG_BITS.W)))
+  // val cache_data  = RegInit(VecInit(WAY_NUMS, Vec(BYTES_NUMS, UInt(DATA_WIDTH.W))))
+  val cache_data = RegInit(VecInit(Seq.fill(WAY_NUMS)(VecInit(Seq.fill(BYTES_NUMS)(0.U(DATA_WIDTH.W))))))
+  val cache_tag   = RegInit(VecInit(Seq.fill(WAY_NUMS)(0.U(TAG_BITS.W))))
   val cache_valid = RegInit(VecInit(Seq.fill(WAY_NUMS)(false.B)))
 
   // AXI Assignments
@@ -107,5 +108,5 @@ class ICache(val ADDR_WIDTH: Int = 32, val DATA_WIDTH: Int = 32, val CACHE_SIZE:
   val hit_offset = io.addr(OFFSET_BITS - 1, 0)
 
   io.data := cache_data(hit_index)(hit_offset(OFFSET_BITS - 1, 2))
-  io.hit := cache_valid(hit_index) && (cache_tag(hit_index) === hit_tag)
+  io.hit  := cache_valid(hit_index) && (cache_tag(hit_index) === hit_tag)
 }

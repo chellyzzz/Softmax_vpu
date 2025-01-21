@@ -17,8 +17,8 @@
 #include <cpu/cpu.h>
 #include <cpu/trace.h>
 #include <cpu/decode.h>
-#include "VysyxSoCFull.h"
-#include "VysyxSoCFull___024root.h"
+#include "Vtop.h"
+#include "Vtop___024root.h"
 
 #ifdef CONFIG_NVBOARD
 #include <nvboard.h>
@@ -32,13 +32,13 @@ uint64_t cycles = 0;
 uint64_t ins_cnt = 0;
 
 #define MAX_INST_TO_PRINT 11
-#define PC_WAVE_START 0x30000000
+#define PC_WAVE_START 0x80000000
 #ifdef CONFIG_WP
 bool wp_check();
 #endif
 
 static VerilatedContext* contextp;; 
-static VysyxSoCFull* top;
+static Vtop* top;
 static VerilatedVcdC* vcd;
 static word_t instr;
 extern bool wave_enable;
@@ -64,7 +64,7 @@ extern bool ftrace_enable;
 
 // cpu exec
 void reg_update(){  
-  if(top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__icache_hit){
+  if(top->rootp->top__DOT__cpu__DOT__icache_io_hit){
     ins_cnt ++;
   }
   #ifdef MAX_DEADS
@@ -80,7 +80,7 @@ void reg_update(){
     }
   }
   #endif
-  for(int i = 0; i < 16; i++){
+  for(int i = 0; i < 32; i++){
     cpu.gpr[i] = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__regfile1__DOT__rf[i];
   }
   cpu.csr.mcause = 11;
@@ -116,7 +116,8 @@ void disasm_pc(Decode* s){
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
 }
 #endif
-void verilator_sync_init(VerilatedContext* contextp_sdb, VysyxSoCFull* top_sdb, VerilatedVcdC* vcd_sdb){
+
+void verilator_sync_init(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb){
   contextp = contextp_sdb;
   top = top_sdb;  
   vcd = vcd_sdb;
@@ -128,10 +129,6 @@ void decode_pc(Decode* s){
   s->dnpc = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ifu_pc_next;
   // s->isa.inst.val = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT____Vcellout__ifu2idu_regs__o_ins;
   instr = s->isa.inst.val;
-  #ifdef CONFIG_ITRACE
-      disasm_pc(s);
-      iringbuf_push(s);
-  #endif
   return;
 }
 

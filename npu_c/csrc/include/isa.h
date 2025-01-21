@@ -13,14 +13,12 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
-#ifndef __ISA_H__
-#define __ISA_H__
-
-// Located at src/isa/$(GUEST_ISA)/include/isa-def.h
 #include <isa-def.h>
 
 // The macro `__GUEST_ISA__` is defined in $(CFLAGS).
 // It will be expanded as "x86" or "mips32" ...
+#define __GUEST_ISA__ riscv64
+
 typedef concat(__GUEST_ISA__, _CPU_state) CPU_state;
 typedef concat(__GUEST_ISA__, _ISADecodeInfo) ISADecodeInfo;
 
@@ -32,20 +30,6 @@ extern uint64_t cycles;
 extern uint64_t ins_cnt;
 extern uint64_t ifu_cnt;
 
-//in dpic
-extern uint64_t load_cnt;
-extern uint64_t store_cnt;
-extern uint64_t brch_cnt;
-extern uint64_t csr_cnt;
-extern uint64_t jal_cnt;
-extern uint64_t ifu_delay_start;
-extern uint64_t ifu_delay_end;
-extern uint64_t load_delay_start;
-extern uint64_t load_delay_end;
-extern uint64_t store_delay_start;
-extern uint64_t store_delay_end;
-extern uint32_t icache_hits;
-extern uint32_t icache_miss;    
 // reg
 extern CPU_state cpu;
 void isa_reg_display();
@@ -55,24 +39,3 @@ void isa_csr_display();
 // exec
 struct Decode;
 int isa_exec_once(struct Decode *s);
-
-// memory
-enum { MMU_DIRECT, MMU_TRANSLATE, MMU_FAIL };
-enum { MEM_TYPE_IFETCH, MEM_TYPE_READ, MEM_TYPE_WRITE };
-enum { MEM_RET_OK, MEM_RET_FAIL, MEM_RET_CROSS_PAGE };
-#ifndef isa_mmu_check
-int isa_mmu_check(vaddr_t vaddr, int len, int type);
-#endif
-paddr_t isa_mmu_translate(vaddr_t vaddr, int len, int type);
-
-// interrupt/exception
-vaddr_t isa_raise_intr(word_t NO, vaddr_t epc);
-#define INTR_EMPTY ((word_t)-1)
-word_t isa_query_intr();
-
-// difftest
-bool diff_checkregs(CPU_state *ref_r, vaddr_t pc);
-void isa_difftest_attach();
-void init_difftest(char *ref_so_file, long img_size, int port);
-
-#endif
