@@ -10,3 +10,5 @@
 npu_c/.bloop/
 
 */out/
+
+npu_c/build
