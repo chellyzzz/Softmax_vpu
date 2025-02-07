@@ -1,9 +1,0 @@
-{
-    "value": [
-        "ref:v0:c984eca8:/home/chelly/grad/npu_c/compile-resources",
-        "ref:v0:c984eca8:/home/chelly/grad/npu_c/resources",
-        "ref:v0:7e09246c:/home/chelly/grad/npu_c/out/top/compile.dest/classes"
-    ],
-    "valueHash": -751038640,
-    "inputsHash": -1422766957
-}

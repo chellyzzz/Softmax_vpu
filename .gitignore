@@ -4,11 +4,8 @@
 # Scala build
 .scala-build/
 
-# VS Code (optional)
 .vscode/
 
-npu_c/.bloop/
+out/
 
-*/out/
-
-npu_c/build
+build/

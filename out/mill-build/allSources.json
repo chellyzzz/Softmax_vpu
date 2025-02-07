@@ -1,8 +1,0 @@
-{
-    "value": [
-        "ref:v0:f30eb4ce:/home/chelly/grad/npu_c/build.sc",
-        "ref:v0:6eec0840:/home/chelly/grad/npu_c/out/mill-build/generateScriptSources.dest"
-    ],
-    "valueHash": -1765172607,
-    "inputsHash": -1334897152
-}
