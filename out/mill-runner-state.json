@@ -1,0 +1,18 @@
+{
+    "workerCache": {
+        "mill.scalalib.ZincWorkerModule.worker": {
+            "identityHashCode": 151312377,
+            "inputHash": -1159317605
+        }
+    },
+    "evalWatched": [
+        "ref:v0:c984eca8:/home/chelly/grad/npu_c/resources",
+        "ref:v0:c984eca8:/home/chelly/grad/npu_c/compile-resources",
+        "ref:v0:adb7da03:/home/chelly/grad/npu_c/scala"
+    ],
+    "moduleWatched": [],
+    "scriptImportGraph": [],
+    "classLoaderIdentity": [],
+    "runClasspath": [],
+    "runClasspathHash": 473519988
+}
