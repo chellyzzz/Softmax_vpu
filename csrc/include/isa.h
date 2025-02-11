@@ -13,22 +13,34 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
-#include <isa-def.h>
+#ifndef _ISA_H_
+#define _ISA_H_
 
-// The macro `__GUEST_ISA__` is defined in $(CFLAGS).
-// It will be expanded as "x86" or "mips32" ...
-#define __GUEST_ISA__ riscv64
-
-typedef concat(__GUEST_ISA__, _CPU_state) CPU_state;
-typedef concat(__GUEST_ISA__, _ISADecodeInfo) ISADecodeInfo;
+#include "config.h"
 
 // monitor
-extern unsigned char isa_logo[];
+void init_sys();
 void init_isa();
-//in cpu-exec
-extern uint64_t cycles;
-extern uint64_t ins_cnt;
-extern uint64_t ifu_cnt;
+
+typedef struct {
+  word_t mtvec;
+  word_t mepc;
+  word_t mstatus;
+  word_t mcause;
+} CSRs;
+
+typedef struct {
+  word_t gpr[32];
+  word_t pc;
+  CSRs csr;
+} CPU_state;
+
+// decode
+typedef struct {
+  union {
+    uint32_t val;
+  } inst;
+} Decode;
 
 // reg
 extern CPU_state cpu;
@@ -36,6 +48,4 @@ void isa_reg_display();
 word_t isa_reg_str2val(const char *name, bool *success);
 void isa_csr_display();
 
-// exec
-struct Decode;
-int isa_exec_once(struct Decode *s);
+#endif

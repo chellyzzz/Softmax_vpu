@@ -13,36 +13,23 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
-#ifndef __CPU_CPU_H__
-#define __CPU_CPU_H__
+#ifndef __CPU_H__
+#define __CPU_H__
 
-#include <common.h>
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 #include "Vtop.h"
 
+//in cpu-exec
+extern uint64_t cycles;
+extern uint64_t ins_cnt;
+extern uint64_t ifu_cnt;
+
+// exec
 void cpu_exec(uint64_t n);
-
-
-void set_nemu_state(int state, vaddr_t pc, int halt_ret);
-void invalid_inst(vaddr_t thispc);
 
 int hit_goodtrap();
 bool if_end();
 void verilator_sync_init(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb);
-
-#ifdef CONFIG_FTRACE
-typedef struct functab_node
-{
-    char* name;
-    vaddr_t addr;
-    vaddr_t addr_end;
-} functab_node;
-
-extern functab_node* functab_head;
-#endif
-
-#define NEMUTRAP(thispc, code) set_nemu_state(NEMU_END, thispc, code)
-#define INV(thispc) invalid_inst(thispc)
 
 #endif

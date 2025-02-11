@@ -11,10 +11,7 @@ class CpuCore extends Module with Parameter {
   val io = IO(new Bundle {
     // AXI4 Master Interface
     val io_master = new axi_master
-    val ifu_master = new axi_master
-    val data  = Output(UInt(DataWidth.W))
-    val hit = Output(Bool())
-    // val io_slave  = new axi_slave
+    val ebreak = Output(Bool())
   })
   
   // Local constants for parameters
@@ -101,7 +98,6 @@ class CpuCore extends Module with Parameter {
   val exu2wbu_mret = Wire(Bool())
   val exu2wbu_ecall = Wire(Bool())
   val exu2wbu_res = Wire(UInt(32.W))
-  val exu2wbu_ebreak = Wire(Bool())
   
   val  ifu2idu_pc           = Wire(UInt(DataWidth.W)) 
 
@@ -153,10 +149,6 @@ class CpuCore extends Module with Parameter {
   ifu.io.i_pc_update  := pc_update_en
   ifu.io.i_post_ready := idu2ifu_ready
   ifu.io.icache_ins   := icache.io.data 
-  //TODO:
-  io.data := icache.io.data
-  io.ifu_master <> icache.io.ifu
-  io.hit := icache.io.hit
 
   ifu2idu_regs.io.i_pc          := ifu.io.pc_next 
   ifu2idu_pc                    := ifu2idu_regs.io.o_pc
@@ -304,8 +296,7 @@ class CpuCore extends Module with Parameter {
   exu2wbu_mret       := exu_wbu_regs.io.o_mret        
   exu2wbu_ecall      := exu_wbu_regs.io.o_ecall         
   exu2wbu_res        := exu_wbu_regs.io.o_res         
-  exu2wbu_ebreak     := exu_wbu_regs.io.o_ebreak        
-
+  io.ebreak          := exu_wbu_regs.io.o_ebreak        
 
   val wbu1 = Module(new WBU)
   wbu1.io.i_pc_next := exu2wbu_pc_next
@@ -317,7 +308,6 @@ class CpuCore extends Module with Parameter {
   wbu1.io.i_wen := exu2wbu_wen
   wbu1.io.i_csr_wen := exu2wbu_csr_wen
   wbu1.io.i_jalr := exu2wbu_jalr
-  wbu1.io.i_ebreak := exu2wbu_ebreak
   wbu1.io.i_mret := exu2wbu_mret
   wbu1.io.i_ecall := exu2wbu_ecall
   wbu1.io.i_res := exu2wbu_res

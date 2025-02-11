@@ -1,10 +1,8 @@
 #include <Vtop.h>
 #include "verilated.h"
 #include "verilated_vcd_c.h"
-#include <common.h>
+#include <cpu.h>
 #include <isa.h>
-#include <memory/paddr.h>
-
 
 void init_monitor(int, char *[]);
 int sdb_mainloop(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb);
@@ -42,8 +40,10 @@ void init_trace(){
 
 void end_wave(){
     top->final();
+    #ifdef CONFIG_WAVE
     vcd->close();
     delete vcd;
+    #endif
     delete top;
     delete contextp;
 }
@@ -53,10 +53,9 @@ int main(int argc,char *argv[]){
         printf("sorry but no argc\n;");
     }
     Verilated::commandArgs(argc,argv);
-    // init_trace();
-    init_monitor(argc, argv);
-    int good = sdb_mainloop(contextp, top, vcd);
+    init_sys();
+    cpu_exec(-1);
     end_wave();
-    return !good;
+    return 0;
 }
 

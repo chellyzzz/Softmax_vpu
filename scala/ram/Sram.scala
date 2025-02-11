@@ -77,7 +77,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |      reg             [DATA_WIDTH-1:0]                    slv_reg0    ;
             |      wire                                                slv_reg_rden    ;
             |      wire                                                slv_reg_wren    ;
-            |      wire            [DATA_WIDTH-1:0]                    reg_data_out    ;
+            |      reg             [DATA_WIDTH-1:0]                    reg_data_out    ;
             |      integer                                             byte_index  ;
             |      reg                                                 aw_en   ;
             |  // I/O Connections assignments

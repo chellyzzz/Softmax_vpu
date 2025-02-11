@@ -14,7 +14,6 @@ class WBU extends Module with Parameter {
     val i_brch = Input(Bool())
     val i_jal = Input(Bool())
     val i_jalr = Input(Bool())
-    val i_ebreak = Input(Bool())
     val i_mret = Input(Bool())
     val i_ecall = Input(Bool())
     val i_pc_next = Input(UInt(DataWidth.W))

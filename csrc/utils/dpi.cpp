@@ -1,6 +1,5 @@
 #include "verilated_dpi.h"
-#include <memory/paddr.h>
-#include <cpu/difftest.h>
+#include <mem.h>
 #include <isa.h>
 
 uint64_t load_cnt = 0;
@@ -40,14 +39,4 @@ extern "C" void npc_pmem_write(int waddr, int wdata, int wen, int len){
   }
   // printf("waddr: 0x%08x\n", waddr);
   return ;
-}
-extern "C" void store_skip(int addr){
-  #ifdef CONFIG_DIFFTEST
-  if(!in_mem_npc(addr))
-    difftest_skip_ref();
-    return ;
-  #else
-    return ;
-  #endif
-
 }

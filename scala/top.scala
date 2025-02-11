@@ -9,9 +9,7 @@ import sram._
 
 class top extends Module with Parameter {
   val io = IO(new Bundle {
-    val io_master = new axi_master
-    val data =  Output(UInt((DataWidth).W))
-    val data_valid = Output(Bool())
+    val ebreak = Output(Bool())
   })
 
   val cpu = Module(new CpuCore)
@@ -19,9 +17,7 @@ class top extends Module with Parameter {
 
   // Connect CPU AXI master interface to RAM
   cpu.io.io_master <> sram.io.sram
-  io.data := cpu.io.data
-  io.data_valid := cpu.io.hit
-  io.io_master <> cpu.io.ifu_master
+  io.ebreak := cpu.io.ebreak
 }
 
 object topMain extends App {
