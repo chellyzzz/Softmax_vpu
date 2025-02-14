@@ -19,7 +19,7 @@
 #include "config.h"
 
 // monitor
-void init_sys();
+void init_sys(int argc,char *argv[]);
 void init_isa();
 
 typedef struct {

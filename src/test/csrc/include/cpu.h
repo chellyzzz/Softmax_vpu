@@ -16,9 +16,17 @@
 #ifndef __CPU_H__
 #define __CPU_H__
 
-#include "verilated.h"
-#include "verilated_vcd_c.h"
 #include "Vtop.h"
+#include "Vtop___024root.h"
+#include "verilated.h"
+
+extern VerilatedContext* contextp; 
+extern Vtop* top;
+#define VCD 1
+#ifdef VCD
+    #include "verilated_vcd_c.h"
+   extern VerilatedVcdC* tfp;
+#endif
 
 //in cpu-exec
 extern uint64_t cycles;
@@ -27,9 +35,9 @@ extern uint64_t ifu_cnt;
 
 // exec
 void cpu_exec(uint64_t n);
+void single_cycle();
 
 int hit_goodtrap();
 bool if_end();
-void verilator_sync_init(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb);
 
 #endif

@@ -20,7 +20,6 @@ object top extends ScalaModule  {
   def chiselOpt: Option[PublishModule] = None
 
   override def millSourcePath = os.pwd
-  def sources = T.sources(millSourcePath / "scala")
 
   override def scalaVersion = ivys.sv
 

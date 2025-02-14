@@ -16,18 +16,7 @@
 #include <isa.h>
 #include <cpu.h> 
 
-#include "Vtop.h"
-#include "Vtop___024root.h"
-
-static VerilatedContext* contextp;; 
-static Vtop* top;
-static VerilatedVcdC* vcd;
-
-// #define MAX_DEADS 100000
-#ifdef MAX_DEADS  
-bool dead_detector = true;
-int dead_cycles   = 0;
-#endif
+CPU_state cpu;
 
 void reg_update(){  
   // for(int i = 0; i < 32; i++){
@@ -45,12 +34,6 @@ void reg_update(){
   return;
 }
 
-void verilator_sync_init(VerilatedContext* contextp_sdb, Vtop* top_sdb, VerilatedVcdC* vcd_sdb){
-  contextp = contextp_sdb;
-  top = top_sdb;  
-  vcd = vcd_sdb;
-}
-
 void decode_pc(){
   // s->pc = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__exu2wbu_pc_next;
   // s->snpc = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__exu2wbu_pc_next + 4;
@@ -60,31 +43,29 @@ void decode_pc(){
   return;
 }
 
-void exec_once(){
-    cycles ++;
-    top->reset = 0;
-    top->clock = 0;
-    top->eval();
-    #ifdef CONFIG_WAVE
-    if(wave_enable){
-      contextp->timeInc(1);
-      vcd->dump(contextp->time());
-    }
-    #endif  
-    top->clock = 1;
-    top->eval();
-    #ifdef CONFIG_NVBOARD
-    nvboard_update();
-    #endif
-    reg_update();
-    decode_pc();
-    #ifdef CONFIG_WAVE
-    if(wave_enable){
-      contextp->timeInc(1);
-      vcd->dump(contextp->time());
-    }
-    #endif
-    return;
+void single_cycle() {
+
+  contextp->timeInc(1);
+  top->clock = 0; top->eval();
+  
+  #ifdef VCD
+  tfp->dump(contextp->time());
+  #endif
+
+  contextp->timeInc(1);
+  top->clock = 1; top->eval();
+
+  #ifdef VCD
+  tfp->dump(contextp->time());
+  #endif
+}
+
+int hit_goodtrap(){
+  return (cpu.gpr[10] == 0);
+}
+
+bool if_end(){
+  return (top->rootp->io_ebreak == 1);
 }
 
 void cpu_exec(uint64_t n){
@@ -94,14 +75,7 @@ void cpu_exec(uint64_t n){
         printf("npc: %s at pc = %lx\n", (hit_goodtrap() ? "HIT GOOD TRAP" : "HIT BAD TRAP"), cpu.pc);
         break;
       }
-      exec_once();
+      single_cycle();
     }
     return;
-}
-bool if_end(){
-  return (top->rootp->io_ebreak == 1);
-}
-
-int hit_goodtrap(){
-  return (cpu.gpr[10] == 0);
 }

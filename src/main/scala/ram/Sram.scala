@@ -92,7 +92,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  assign sram_AXI_RVALID	= axi_rvalid;
             |  always @( posedge clock)
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_awready <= 1'b0;
             |          aw_en <= 1'b1;
@@ -137,7 +137,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  // sram_AXI_AWVALID and sram_AXI_WVALID are valid. 
             |  always @( posedge clock )
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_awaddr <= 0;
             |      end 
@@ -156,7 +156,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  // de-asserted when reset is low. 
             |  always @( posedge clock )
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_wready <= 1'b0;
             |      end 
@@ -183,7 +183,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  // write transaction.
             |  always @( posedge clock )
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_bvalid  <= 0;
             |          axi_bresp   <= 2'b0;
@@ -214,7 +214,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  end   
             |  always @( posedge clock )
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_arready <= 1'b0;
             |          axi_araddr  <= 32'b0;
@@ -236,7 +236,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  end       
             |  always @( posedge clock )
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_rvalid <= 0;
             |          axi_rresp  <= 0;
@@ -266,7 +266,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  // Output register or memory read data
             |  always @( posedge clock )
             |  begin
-            |      if ( reset == 1'b0 )
+            |      if ( reset == 1'b1 )
             |      begin
             |          axi_rdata  <= 0;
             |      end 

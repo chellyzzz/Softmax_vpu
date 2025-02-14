@@ -1,56 +1,65 @@
+TOP = top
+MAIN = top.topMain
+BUILD_DIR = ./build
+OBJ_DIR = $(BUILD_DIR)/OBJ_DIR
 TOPNAME = top
 TOP_V = $(BUILD_DIR)/$(TOPNAME).v
-MAIN = top.topMain
-VNAME = V$(TOPNAME)
 
-BUILD_DIR = ./build
-OBJ_DIR = $(BUILD_DIR)/obj_dir
+SCALA_FILE = $(shell find ./src/main/ -name '*.scala')
 
-# Verilator
 VERILATOR = verilator
+VERILATOR_COVERAGE = verilator_coverage
+# verilator flags
+VERILATOR_FLAGS +=  -MMD --trace --build -cc --exe \
+	                                 -O3 --x-assign fast --x-initial fast --noassert -report-unoptflat
 
-# Generate C++ in executable form
-VERILATOR_FLAGS += --top-module $(TOPNAME)
-VERILATOR_FLAGS += -j 33
-VERILATOR_FLAGS += --Mdir $(OBJ_DIR)
-VERILATOR_FLAGS += -x-assign fast
-# VERILATOR_FLAGS += -Wall
-VERILATOR_FLAGS += --top-module $(TOPNAME)
-VERILATOR_FLAGS += --cc --exe -o $(BUILD_DIR)/$(VNAME)
+# timescale set
+VERILATOR_FLAGS += --timescale 1us/1us
 
+$(TOP_V): $(SCALA_FILE)
+	@mkdir -p $(@D)
+	mill $(TOP).runMain $(MAIN) -td $(@D) --output-file $(@F)
 
-INC_PATH 	:= $(abspath ./csrc/include)
-INCFLAGS 	:= $(addprefix -I, $(INC_PATH))
-C_FLAGS 	:= -CFLAGS "$(INCFLAGS)"
+verilog: $(TOP_V)
 
-CSRCS 		+= $(shell find $(abspath ./csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-SCALA_SRCS 	+= $(shell find ./scala/ -name '*.scala')
-VSRCS 		+= $(shell find ./build/ -name '*.v')
+# vcd ?= 
+# ifeq ($(vcd), 1)
+#     CFLAGS += -DVCD
+# endif
 
+# C flags
+INC_PATH += $(abspath ./src/test/csrc/include)
+INCFLAGS = $(addprefix -I, $(INC_PATH))
+CFLAGS += $(INCFLAGS) $(CFLAGS_SIM) -DTOP_NAME="V$(TOPNAME)"
+CFLAGS += -DVCD
 
-default: run
+# source file
+VSRCS = $(shell find $(abspath ./build) -name "*.v" -or -name "*.sv" )
+CSRCS = $(shell find $(abspath ./src/test/csrc) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 
-$(TOP_V): $(SCALA_SRCS)
-	@mkdir -p $(dir $(TOP_V))
-	mill $(TOPNAME).runMain $(MAIN) -td $(dir $(TOP_V)) --output-file $(notdir $(TOP_V))
-	
-compile: $(VSRCS) $(CSRCS) $(TOP_V)
+BIN = $(BUILD_DIR)/$(TOP)
+NPC_EXEC := $(BIN)
+
+sim: $(CSRCS) $(TOP_V)
 	@rm -rf $(OBJ_DIR)
-	$(VERILATOR) $(C_FLAGS) $(VERILATOR_FLAGS) $(VSRCS) $(CSRCS)
+	$(VERILATOR) $(VERILATOR_FLAGS) -top $(TOPNAME) $(CSRCS) $(VSRCS) \
+	$(addprefix -CFLAGS , $(CFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
+	--Mdir $(OBJ_DIR) -o $(abspath $(BIN))
 
-run: compile
-	$(BUILD_DIR)/$(VNAME)
+run:
+	@echo
+	@echo "------------ RUN --------------"
+	$(NPC_EXEC)
+	@echo "----- if you need vcd file. add vcd=y to make ----"
 
-wave:
-	gtkwave $(BUILD_DIR)/wave.vcd
-
-menuconfig:
-	cd csrc && make menuconfig && cd ..
-
-sim: run wave
+srun: sim run
 
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: default menuconfig clean run perf
+clean_mill:
+	rm -rf out
 
+clean_all: clean clean_mill
+
+.PHONY: clean clean_all clean_mill srun run sim verilog

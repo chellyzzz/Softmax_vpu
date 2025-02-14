@@ -133,27 +133,22 @@ class CpuCore extends Module with Parameter {
   mtvec := Csrs.io.o_mtvec
 
 
-  val icache = Module(new ICache(ADDR_WIDTH = 32, DATA_WIDTH = 32, CACHE_SIZE = 16, WAY_NUMS = 2, BYTES_NUMS = 8))
   val xbar    = Module(new Xbar)
   val ifu = Module(new IFU)
   val ifu2idu_regs = withReset( reset.asBool | pc_update_en | idu2exu_fence_i){
     Module(new IFU2IDURegs)
   }
 
-  icache.io.addr    := ifu.io.req_addr
-  icache.io.fence_i := fence_i
-  icache.io.ifu <> xbar.io.ifu
+  ifu.io.ifu <> xbar.io.ifu
   
-  ifu.io.hit          := icache.io.hit
   ifu.io.i_pc_next    := pc_next
   ifu.io.i_pc_update  := pc_update_en
   ifu.io.i_post_ready := idu2ifu_ready
-  ifu.io.icache_ins   := icache.io.data 
 
-  ifu2idu_regs.io.i_pc          := ifu.io.pc_next 
+  ifu2idu_regs.io.i_pc          := ifu.io.o_pc_next 
   ifu2idu_pc                    := ifu2idu_regs.io.o_pc
-  ifu2idu_regs.io.i_ins         := icache.io.data
-  ifu2idu_regs.io.i_icache_hit  := icache.io.hit
+  ifu2idu_regs.io.i_ins         := ifu.io.o_ins
+  ifu2idu_regs.io.i_hit         := ifu.io.hit
   ifu2idu_regs.io.i_pre_valid   := pc_update_en
   ifu2idu_regs.io.i_post_ready  := idu2ifu_ready
   ifu2idu_valid                 := ifu2idu_regs.io.o_post_valid
