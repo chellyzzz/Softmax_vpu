@@ -11,3 +11,7 @@ out/
 build/
 
 logs/
+
+.bloop/
+
+!/test/build
