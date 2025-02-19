@@ -70,9 +70,9 @@ bool if_end(){
 
 void cpu_exec(uint64_t n){
     for(; n > 0; n--){
-      if(if_end()){
+      if(if_end() | contextp->gotFinish()){
         printf("Program execution has ended. To restart the program, exit NPC and run again.\n");
-        printf("npc: %s at pc = %lx\n", (hit_goodtrap() ? "HIT GOOD TRAP" : "HIT BAD TRAP"), cpu.pc);
+        printf("npc: %s at pc = %lx\n", (hit_goodtrap() & if_end() ? "HIT GOOD TRAP" : "HIT BAD TRAP"), cpu.pc);
         break;
       }
       single_cycle();

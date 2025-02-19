@@ -113,6 +113,12 @@ class IDU extends Module with Parameter {
   val TYPEEBRK   = (opcode === TYPE_EBRK)
   val TYPEFENCE  = (opcode === TYPE_FENCE)
   
+  val type_error = !TYPEI && !TYPEI_LOAD && !TYPER && !TYPELUI && !TYPEAUIPC && !TYPEJAL && !TYPEJALR && !TYPES && !TYPEB && !TYPEEBRK && !TYPEFENCE
+  when(type_error) {
+    stop()  
+    println("Error: Unknown instruction type\n")
+  }
+
   val CSRRS = (TYPEEBRK && func3 === FUN3_CSRRS)
   val CSRRW = (TYPEEBRK && func3 === FUN3_CSRRW)
 
