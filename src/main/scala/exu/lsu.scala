@@ -2,11 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
-import parameters.axi_master
-import parameters.axi_slave
+import Parameter._
 
-class LSU extends Module with Parameter {
+class LSU extends Module {
   val io = IO(new Bundle {
     val storeSrc    = Input(UInt(DataWidth.W))
     val aluRes      = Input(UInt(DataWidth.W))

@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class IFU2IDURegs extends Module with Parameter {
+class IFU2IDURegs extends Module{
   val io = IO(new Bundle {
     val i_pc        = Input(UInt(DataWidth.W))
     val i_ins       = Input(UInt(32.W))

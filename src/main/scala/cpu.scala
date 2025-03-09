@@ -2,15 +2,14 @@ package core
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
-import parameters.axi_master
-import parameters.axi_slave
 import cpu._
-
-class CpuCore extends Module with Parameter {
+import Parameter._
+ 
+class CpuCore extends Module {
   val io = IO(new Bundle {
     // AXI4 Master Interface
     val io_master = new axi_master
+    val flush  = Output(Bool())
     val ebreak = Output(Bool())
   })
   
@@ -35,7 +34,7 @@ class CpuCore extends Module with Parameter {
 
   // Load/store and control signals
   val exu_opt = Wire(UInt(3.W))
-  val alu_opt = Wire(UInt(10.W))
+  val alu_opt = Wire(UInt(OptWidth.W))
   val idu_wen = Wire(Bool())
   val csr_wen = Wire(Bool())
   val wbu_wen = Wire(Bool())
@@ -73,7 +72,7 @@ class CpuCore extends Module with Parameter {
   val idu2exu_src_sel2 = Wire(UInt(3.W))
   val idu2exu_rd = Wire(UInt(4.W))
   val idu2exu_exu_opt = Wire(UInt(3.W))
-  val idu2exu_alu_opt = Wire(UInt(10.W))
+  val idu2exu_alu_opt = Wire(UInt(OptWidth.W))
   val idu2exu_wen = Wire(Bool())
   val idu2exu_csr_wen = Wire(Bool())
   val idu2exu_mret = Wire(Bool())
@@ -142,10 +141,10 @@ class CpuCore extends Module with Parameter {
   ifu.io.ifu <> xbar.io.ifu
   
   ifu.io.i_pc_next    := pc_next
-  ifu.io.i_pc_update  := pc_update_en
+  ifu.io.flush        := pc_update_en
   ifu.io.i_post_ready := idu2ifu_ready
 
-  ifu2idu_regs.io.i_pc          := ifu.io.o_pc_next 
+  ifu2idu_regs.io.i_pc          := ifu.io.o_pc 
   ifu2idu_pc                    := ifu2idu_regs.io.o_pc
   ifu2idu_regs.io.i_ins         := ifu.io.o_ins
   ifu2idu_regs.io.i_hit         := ifu.io.hit
@@ -292,7 +291,8 @@ class CpuCore extends Module with Parameter {
   exu2wbu_ecall      := exu_wbu_regs.io.o_ecall         
   exu2wbu_res        := exu_wbu_regs.io.o_res         
   io.ebreak          := exu_wbu_regs.io.o_ebreak        
-
+  io.flush           := pc_update_en
+  
   val wbu1 = Module(new WBU)
   wbu1.io.i_pc_next := exu2wbu_pc_next
   wbu1.io.i_pre_valid := exu2wbu_valid

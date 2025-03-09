@@ -2,11 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
-import parameters.axi_master
-import parameters.axi_slave 
+import Parameter._
 
-class Xbar extends Module with Parameter {
+class Xbar extends Module {
   val io = IO(new Bundle {
     // IFU AXI-FULL Interface
     val ifu = new axi_slave
@@ -21,7 +19,7 @@ class Xbar extends Module with Parameter {
 
     val ifu_req = io.ifu.AXI_ARVALID
     val lsu_req = io.lsu.AXI_AWVALID | io.lsu.AXI_ARVALID
-    val ifu_ram_finish = io.sram.AXI_RLAST & io.ifu.AXI_RREADY
+    val ifu_ram_finish = io.sram.AXI_RLAST
     val lsu_ram_finish = io.sram.AXI_BREADY| io.lsu.AXI_RREADY
 
     val idle :: ifu_ram :: lsu_ram :: Nil = Enum(3)

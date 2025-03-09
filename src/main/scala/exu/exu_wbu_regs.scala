@@ -2,10 +2,10 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
 
-class EXU_WBU_Regs extends Module with Parameter {
+class EXU_WBU_Regs extends Module {
   val io = IO(new Bundle {
     val i_brch      = Input(Bool())
     val i_jal       = Input(Bool())

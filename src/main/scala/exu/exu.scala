@@ -2,11 +2,10 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
-import parameters.axi_master
-import parameters.axi_slave 
+import Parameter._
+import cpu._
 
-class EXU extends Module with Parameter {
+class EXU extends Module {
   val io = IO(new Bundle {
     val i_src1      = Input(UInt(DataWidth.W))
     val i_src2      = Input(UInt(DataWidth.W))
@@ -25,7 +24,7 @@ class EXU extends Module with Parameter {
     // Ecall and Mret
     val i_ecall     = Input(Bool())
     val i_mret      = Input(Bool())
-    val i_alu_opt   = Input(UInt(10.W))
+    val i_alu_opt   = Input(UInt(OptWidth.W))
     val exu_opt     = Input(UInt(3.W))
 
     val o_res       = Output(UInt(DataWidth.W))
@@ -58,8 +57,8 @@ class EXU extends Module with Parameter {
   postValid := io.i_pre_valid
 
   // Handshake logic
-  io.o_post_valid := Mux(ifLsu, (io.lsu.AXI_RLAST && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, postValid)
-  io.o_pre_ready := Mux(ifLsu, (io.lsu.AXI_RLAST && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, true.B)
+  io.o_post_valid := Mux(ifLsu, (io.lsu.AXI_RVALID && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, postValid)
+  io.o_pre_ready := Mux(ifLsu, (io.lsu.AXI_RVALID && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, true.B)
 
   
   // ALU source selection

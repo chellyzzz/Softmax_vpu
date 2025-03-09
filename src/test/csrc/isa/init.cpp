@@ -1,7 +1,7 @@
 #include <isa.h>
 #include <mem.h>
 
-static const char *img_file = "/nfs/home/xuzhi/softmax/test/build/main.bin";
+static const char *img_file = "/home/chelly/grad/test/build/main.bin";
 
 static const uint32_t img [] = {
   0xfff78793,  // addi a5, a5, 0xfff
@@ -27,7 +27,7 @@ static void load_img() {
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
 
-  printf("The image is %s, size = %ld", img_file, size);
+  printf("The image is %s, size = %ld\n", img_file, size);
 
   fseek(fp, 0, SEEK_SET);
 
@@ -35,12 +35,11 @@ static void load_img() {
   assert(ret == 1);
   fclose(fp); 
 
-  assert(0);
   return ;
 }
 
 void init_sys(int argc,char *argv[]){
   init_mem(CONFIG_MSIZE);
   init_isa();
-  // load_img();
+  load_img();
 }

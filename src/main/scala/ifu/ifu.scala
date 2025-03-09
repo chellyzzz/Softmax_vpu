@@ -2,16 +2,16 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
-import parameters.axi_master
+import Parameter._
 
-class IFU extends Module with Parameter {
+class IFU extends Module {
   val io = IO(new Bundle {
     val i_pc_next = Input(UInt(DataWidth.W))
-    val i_pc_update = Input(Bool())
+    val flush = Input(Bool())
     val i_post_ready = Input(Bool())
     val o_ins = Output(UInt(32.W))
-    val o_pc_next = Output(UInt(DataWidth.W))
+    val o_pc_next = Output(UInt(32.W))
+    val o_pc      = Output(UInt(32.W))
     // ifu_to_cache
     val hit = Output(Bool())
     // axi 
@@ -21,13 +21,18 @@ class IFU extends Module with Parameter {
   // Local constant for RESET_PC
   val RESET_PC = "h80000000".U(DataWidth.W)
   val pc_next = RegInit(RESET_PC)
+  val busy = RegInit(false.B)
   val hit = RegInit(false.B)
+  val ins = RegInit(0.U(32.W))
+  val pc = RegInit(0.U(DataWidth.W))
 
   io.hit := hit
   io.o_pc_next := pc_next
-  io.o_ins := io.ifu.AXI_RDATA
+  io.o_pc := pc
+  io.o_ins := ins
+
   // pc_next logic
-  when(io.i_pc_update) {
+  when(io.flush) {
     pc_next := io.i_pc_next
   } .elsewhen(io.hit & io.i_post_ready) {
     pc_next := pc_next + 4.U
@@ -61,24 +66,43 @@ class IFU extends Module with Parameter {
   io.ifu.AXI_BREADY  := 0.U
 
 
-  when(axi_rready){
+  when(io.flush){
+    hit := false.B
+  } .elsewhen(axi_rready){
     hit := true.B
-  }.elsewhen(hit & io.i_post_ready) {
+  } .elsewhen(hit & io.i_post_ready) {
     hit := false.B
   }
 
-  when(!hit && !axi_arvalid) {
+  when(io.flush){
+    axi_arvalid := false.B
+  } .elsewhen(!hit && !axi_arvalid && !busy) {
     axi_arvalid := true.B
   }.elsewhen(axi_arvalid && io.ifu.AXI_ARREADY) {
     axi_arvalid := false.B
   }.elsewhen(io.ifu.AXI_RLAST && io.ifu.AXI_RREADY && !hit) {
     axi_arvalid := true.B
   }
-
-  when(io.ifu.AXI_RVALID && !axi_rready) {
+  when(io.flush){
+    axi_rready := false.B
+  } .elsewhen(io.ifu.AXI_RVALID && !axi_rready) {
     axi_rready := true.B
   }.elsewhen(axi_rready) {
     axi_rready := false.B
   }
+
+
+  when(io.flush){
+    busy := false.B
+    ins := 0.U
+    pc  := 0.U
+  } .elsewhen(!hit && !axi_arvalid && !busy) {
+    busy := true.B
+  } .elsewhen(io.ifu.AXI_RVALID && io.ifu.AXI_RREADY) {
+    busy := false.B
+    ins := io.ifu.AXI_RDATA
+    pc  := pc_next
+  }
+
 }
 

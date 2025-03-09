@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class ALU extends Module with Parameter {
+class ALU extends Module {
   val io = IO(new Bundle {
     val src1 = Input(UInt(DataWidth.W)) // 改为 UInt 类型
     val src2 = Input(UInt(DataWidth.W)) // 改为 UInt 类型

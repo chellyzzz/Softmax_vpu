@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class RegisterFile extends Module with Parameter {
+class RegisterFile extends Module {
   val io = IO(new Bundle {
     val wdata = Input(UInt(DataWidth.W))
     val waddr = Input(UInt(4.W))

@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class StdRst extends Module with Parameter {
+class StdRst extends Module {
   val io = IO(new Bundle {
     val i_rst_n     = Input(Bool())
     val o_rst_n_sync = Output(Bool())

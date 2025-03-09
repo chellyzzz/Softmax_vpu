@@ -3,11 +3,7 @@ package sram
 import chisel3._
 import chisel3.util._
 import chisel3.experimental._
-import parameters.Parameter
-import parameters.axi_slave
-
-import chisel3._
-import chisel3.experimental._
+import cpu._
 import java.lang.module.ModuleDescriptor.Modifier
 
 class ram_simulation extends BlackBox with HasBlackBoxInline {
@@ -70,6 +66,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |      reg             [DATA_WIDTH-1 : 0]                  axi_rdata   ;
             |      reg             [   1:0]                            axi_rresp   ;
             |      reg                                                 axi_rvalid  ;
+            |      reg                                                 axi_rlast   ;
             |  //----------------------------------------------
             |  //-- Signals for user logic register space example
             |  //------------------------------------------------
@@ -90,6 +87,8 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  assign sram_AXI_RDATA	= axi_rdata;
             |  assign sram_AXI_RRESP	= axi_rresp;
             |  assign sram_AXI_RVALID	= axi_rvalid;
+            |  assign sram_AXI_RLAST	= axi_rlast;
+            |
             |  always @( posedge clock)
             |  begin
             |      if ( reset == 1'b1 )
@@ -283,6 +282,26 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |              // axi_rresp <= 2'b0; // 'IDLE' response
             |      end
             |  end    
+            |
+            | always @( posedge clock )
+            | begin
+            |     if ( reset == 1'b1 )  
+            |     begin
+            |     axi_rlast <= 1'b0;
+            |     end
+            |     else
+            |     begin
+            |         if (axi_rvalid && sram_AXI_RREADY)
+            |         begin
+            |             axi_rlast <= 1'b1;
+            |         end
+            |         else
+            |         begin
+            |             axi_rlast <= 1'b0;
+            |         end
+            |     end
+            | end
+            |
               endmodule
             """.stripMargin)
 
@@ -290,14 +309,15 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
 }
 
 
-class RamSimulation extends Module with Parameter {
+class RamSimulation extends Module {
   val io = IO(new Bundle {
     val sram = new axi_slave
+    val flush = Input(Bool())
   })
 
   val sram_sim = Module(new ram_simulation)
   sram_sim.io.clock := clock
-  sram_sim.io.reset := reset
+  sram_sim.io.reset := reset.asBool | io.flush
   sram_sim.io.sram <> io.sram
-
+  
 }

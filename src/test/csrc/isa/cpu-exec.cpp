@@ -19,18 +19,49 @@
 CPU_state cpu;
 
 void reg_update(){  
-  // for(int i = 0; i < 32; i++){
-  //   cpu.gpr[i] = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__regfile1__DOT__rf[i];
-  // }
+  cpu.gpr[0] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_0;
+  cpu.gpr[1] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_1;
+  cpu.gpr[2] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_2;
+  cpu.gpr[3] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_3;
+  cpu.gpr[4] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_4;
+  cpu.gpr[5] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_5;
+  cpu.gpr[6] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_6;
+  cpu.gpr[7] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_7;
+  cpu.gpr[8] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_8;
+  cpu.gpr[9] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_9;
+  cpu.gpr[10] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_10;
+  cpu.gpr[11] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_11;
+  cpu.gpr[12] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_12;
+  cpu.gpr[13] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_13;
+  cpu.gpr[14] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_14;
+  cpu.gpr[15] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_15;
+  cpu.gpr[16] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_16;
+  cpu.gpr[17] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_17;
+  cpu.gpr[18] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_18;
+  cpu.gpr[19] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_19;
+  cpu.gpr[20] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_20;
+  cpu.gpr[21] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_21;
+  cpu.gpr[22] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_22;
+  cpu.gpr[23] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_23;
+  cpu.gpr[24] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_24;
+  cpu.gpr[25] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_25;
+  cpu.gpr[26] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_26;
+  cpu.gpr[27] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_27;
+  cpu.gpr[28] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_28;
+  cpu.gpr[29] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_29;
+  cpu.gpr[30] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_30;
+  cpu.gpr[31] = top->rootp->top__DOT__cpu__DOT__regfile__DOT__regfile_31;
   // cpu.csr.mstatus = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__Csrs__DOT__mstatus;
   // cpu.csr.mepc = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__Csrs__DOT__mepc;
   // cpu.csr.mtvec = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__Csrs__DOT__mtvec;
-  // cpu.pc = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ifu_pc_next;
-  // #ifdef PC_WAVE_START
-  // if(cpu.pc == PC_WAVE_START){
-  //   wave_enable = true;
-  // }
-  // #endif
+  if(top->rootp->top__DOT__cpu__DOT__ifu2idu_regs__DOT__pc != 0){
+    cpu.pc = top->rootp->top__DOT__cpu__DOT__ifu2idu_regs__DOT__pc;
+  }
+  #ifdef PC_WAVE_START
+  if(cpu.pc == PC_WAVE_START){
+    wave_enable = true;
+  }
+  #endif
   return;
 }
 
@@ -54,7 +85,7 @@ void single_cycle() {
 
   contextp->timeInc(1);
   top->clock = 1; top->eval();
-
+  reg_update();
   #ifdef VCD
   tfp->dump(contextp->time());
   #endif

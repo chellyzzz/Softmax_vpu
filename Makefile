@@ -22,11 +22,6 @@ $(TOP_V): $(SCALA_FILE)
 
 verilog: $(TOP_V)
 
-# vcd ?= 
-# ifeq ($(vcd), 1)
-#     CFLAGS += -DVCD
-# endif
-
 # C flags
 INC_PATH += $(abspath ./src/test/csrc/include)
 INCFLAGS = $(addprefix -I, $(INC_PATH))
@@ -40,19 +35,18 @@ CSRCS = $(shell find $(abspath ./src/test/csrc) -name "*.c" -or -name "*.cc" -or
 BIN = $(BUILD_DIR)/$(TOP)
 NPC_EXEC := $(BIN)
 
-sim: $(CSRCS) $(TOP_V)
+default: run	
+
+$(BIN): $(CSRCS) $(TOP_V)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_FLAGS) -top $(TOPNAME) $(CSRCS) $(VSRCS) \
 	$(addprefix -CFLAGS , $(CFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
 	--Mdir $(OBJ_DIR) -o $(abspath $(BIN))
 
-run:
+run: $(BIN)
 	@echo
 	@echo "------------ RUN --------------"
 	$(NPC_EXEC)
-	@echo "----- if you need vcd file. add vcd=y to make ----"
-
-srun: sim run
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -61,5 +55,8 @@ clean_mill:
 	rm -rf out
 
 clean_all: clean clean_mill
+
+wave:
+	gtkwave $(BUILD_DIR)/$(TOPNAME).vcd
 
 .PHONY: clean clean_all clean_mill srun run sim verilog

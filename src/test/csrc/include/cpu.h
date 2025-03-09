@@ -22,11 +22,15 @@
 
 extern VerilatedContext* contextp; 
 extern Vtop* top;
+
 #define VCD 1
 #ifdef VCD
     #include "verilated_vcd_c.h"
    extern VerilatedVcdC* tfp;
 #endif
+
+
+#define CONFIG_DIFFTEST 1
 
 //in cpu-exec
 extern uint64_t cycles;

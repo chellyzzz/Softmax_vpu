@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class WBU extends Module with Parameter {
+class WBU extends Module {
   val io = IO(new Bundle {
     val i_pre_valid = Input(Bool())
     val i_wen = Input(Bool())

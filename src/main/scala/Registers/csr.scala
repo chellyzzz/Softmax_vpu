@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class CSR extends Module with Parameter {
+class CSR extends Module {
   val io = IO(new Bundle {
     val i_csr_wen = Input(Bool())
     val i_ecall = Input(Bool())

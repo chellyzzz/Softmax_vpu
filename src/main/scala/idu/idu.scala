@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class IDU extends Module with Parameter {
+class IDU extends Module {
   val io = IO(new Bundle {
     val ins         = Input(UInt(32.W))
     val o_imm       = Output(UInt(32.W))
@@ -13,7 +13,7 @@ class IDU extends Module with Parameter {
     val o_rs2       = Output(UInt(RegAddrWidth.W))
     val o_csr_addr  = Output(UInt(12.W))
     val o_exu_opt   = Output(UInt(3.W))
-    val o_alu_opt   = Output(UInt(10.W))
+    val o_alu_opt   = Output(UInt(OptWidth.W))
     val o_wen       = Output(Bool())
     val o_csr_wen   = Output(Bool())
     val o_src_sel1  = Output(UInt(2.W))
@@ -113,11 +113,11 @@ class IDU extends Module with Parameter {
   val TYPEEBRK   = (opcode === TYPE_EBRK)
   val TYPEFENCE  = (opcode === TYPE_FENCE)
   
-  val type_error = !TYPEI && !TYPEI_LOAD && !TYPER && !TYPELUI && !TYPEAUIPC && !TYPEJAL && !TYPEJALR && !TYPES && !TYPEB && !TYPEEBRK && !TYPEFENCE
-  when(type_error) {
-    stop()  
-    println("Error: Unknown instruction type\n")
-  }
+  // val type_error = !TYPEI && !TYPEI_LOAD && !TYPER && !TYPELUI && !TYPEAUIPC && !TYPEJAL && !TYPEJALR && !TYPES && !TYPEB && !TYPEEBRK && !TYPEFENCE
+  // when(type_error) {
+  //   stop()  
+  //   println("Error: Unknown instruction type\n")
+  // }
 
   val CSRRS = (TYPEEBRK && func3 === FUN3_CSRRS)
   val CSRRW = (TYPEEBRK && func3 === FUN3_CSRRW)
@@ -142,7 +142,7 @@ class IDU extends Module with Parameter {
   io.o_csr_wen := CSRRS || CSRRW
   
   // Unsigned check logic
-  val o_if_unsigned = (TYPEI && func3 === "b101".U && func7(5)) || 
+  val o_if_unsigned =  (TYPEI && func3 === "b101".U && func7(5)) || 
                        (TYPER && func3 === "b101".U && func7(5)) || 
                        (TYPER && func3 === "b000".U && func7(5)) 
                        

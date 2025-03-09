@@ -2,9 +2,9 @@ package cpu
 
 import chisel3._
 import chisel3.util._
-import parameters.Parameter
+import Parameter._
 
-class IDU_EXU_OUT extends  Bundle with Parameter {
+class IDU_EXU_OUT extends Bundle{
   val pc = UInt(32.W)
   val src1 = UInt(DataWidth.W)
   val src2 = UInt(DataWidth.W)
@@ -13,7 +13,7 @@ class IDU_EXU_OUT extends  Bundle with Parameter {
   val src_sel2 = UInt(3.W)
   val rd = UInt(4.W)
   val exu_opt = UInt(3.W)
-  val alu_opt = UInt(10.W)
+  val alu_opt = UInt(OptWidth.W)
   val wen = Bool()
   val csr_wen = Bool()
   val mret = Bool()
@@ -29,7 +29,7 @@ class IDU_EXU_OUT extends  Bundle with Parameter {
 }
 
 
-class IDU_EXU_Regs extends Module with Parameter {
+class IDU_EXU_Regs extends Module {
   val io = IO(new Bundle {
     val i_pc           = Input(UInt(32.W))
     val i_pre_valid    = Input(Bool())
@@ -47,7 +47,7 @@ class IDU_EXU_Regs extends Module with Parameter {
     val i_mtvec        = Input(UInt(DataWidth.W))
 
     val i_exu_opt      = Input(UInt(3.W))
-    val i_alu_opt      = Input(UInt(10.W))
+    val i_alu_opt      = Input(UInt(OptWidth.W))
     val i_wen          = Input(Bool())
     val i_csr_wen      = Input(Bool())
     val i_src_sel1     = Input(UInt(2.W))

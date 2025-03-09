@@ -2,25 +2,7 @@
 #define __TENSOR_H__
 
 #include <riscv_vector.h>
-#include "encoding.h"
-#include "name.h"
-
-// #ifdef __SPIKE__
-// #define DEBUG_PRINT 1
-// #define CACHELINE 0
-// #else
-// #define DEBUG_PRINT 0
-// #define CACHELINE 128
-// #endif
-
-// #ifndef __clang__
-// typedef __float16_t float16_t;
-// #else
-// typedef _Float16 float16_t;
-
-#define VLEN 2048
-typedef float float32_t;
-typedef double float64_t;
+#include <stdio.h>
 
 typedef struct {
     int shape[4];
@@ -72,4 +54,5 @@ typedef struct {
 #define tensor_new_4d(name, _h, _w, _cin, _cout, _elemsize, _data) \
     tensor_new_4d_with_stride(name, _h, _w, _cin, _cout, _elemsize, _data, _cout * _elemsize) \
 
-#endif
+
+#endif // __TENSOR_H__

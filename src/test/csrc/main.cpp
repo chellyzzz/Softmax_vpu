@@ -14,11 +14,11 @@ void init_sim(int argc, char *argv[]) {
     top->reset = 1;
     top->clock = 0;
 #ifdef VCD
-    Verilated::mkdir("logs");
     contextp->traceEverOn(true);
     tfp = new VerilatedVcdC;
     top->trace(tfp, 99);
-    tfp->open("logs/top.vcd");
+    tfp->open("build/top.vcd");
+    printf("VCD enabled\n");
 #endif
     Verilated::commandArgs(argc,argv);
 }
@@ -44,7 +44,7 @@ int main(int argc,char *argv[]){
     init_sim(argc, argv);
     reset(10);
     init_sys(argc, argv);
-    cpu_exec(1000);
+    cpu_exec(100000);
     sim_exit();
     return 0;
 }
