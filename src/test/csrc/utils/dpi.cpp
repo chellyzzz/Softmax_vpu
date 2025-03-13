@@ -2,18 +2,18 @@
 #include <mem.h>
 #include <isa.h>
 
-uint64_t load_cnt = 0;
-uint64_t store_cnt = 0;
-uint64_t brch_cnt = 0;
-uint64_t csr_cnt = 0;
-uint64_t jal_cnt = 0;
-uint64_t ifu_delay_start = 0;
-uint64_t ifu_delay_end = 0;
-uint64_t load_delay_start = 0;
-uint64_t load_delay_end = 0;
-uint64_t store_delay_start = 0;
-uint64_t store_delay_end = 0;
-uint32_t icache_miss = 0;
+// uint64_t load_cnt = 0;
+// uint64_t store_cnt = 0;
+// uint64_t brch_cnt = 0;
+// uint64_t csr_cnt = 0;
+// uint64_t jal_cnt = 0;
+// uint64_t ifu_delay_start = 0;
+// uint64_t ifu_delay_end = 0;
+// uint64_t load_delay_start = 0;
+// uint64_t load_delay_end = 0;
+// uint64_t store_delay_start = 0;
+// uint64_t store_delay_end = 0;
+// uint32_t icache_miss = 0;
 
 
 extern "C" void npc_pmem_read(int raddr,int *rdata, int ren, int len){

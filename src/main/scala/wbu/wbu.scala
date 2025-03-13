@@ -28,6 +28,10 @@ class WBU extends Module {
     val o_csr_addr = Output(UInt(12.W))
     val o_pre_ready = Output(Bool())
     val o_pc_update = Output(Bool())
+
+    val next = if (debug) Input(Bool()) else Input(UInt(0.W))
+    val diff = if (debug) Output(Bool()) else Output(UInt(0.W))
+
   })
 
   // Output assignments
@@ -51,6 +55,12 @@ class WBU extends Module {
     o_pc_update := io.i_jal || io.i_jalr || io.i_brch || io.i_ecall || io.i_mret
   } .elsewhen(io.o_pc_update) {
     o_pc_update := false.B
+  }
+
+  if(Parameter.debug){
+    val diff = RegInit(false.B)
+    diff := io.next
+    io.diff := diff
   }
     
   o_pc_next := io.i_pc_next

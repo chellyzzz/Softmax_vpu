@@ -32,10 +32,6 @@ class LSU extends Module {
   val SH = "b001".U
   val SW = "b010".U
 
-  val shift8  = Wire(UInt(5.W))
-  val shift   = RegInit(0.U(2.W))
-  shift := io.aluRes(1, 0)
-  shift8 := shift << 3.U
 
   // AXI signals
   val axi_awvalid = RegInit(false.B)
@@ -46,7 +42,7 @@ class LSU extends Module {
   val axi_axaddr = RegInit(0.U(DataWidth.W))
 
   io.M_axi.AXI_AWADDR := axi_axaddr
-  io.M_axi.AXI_WDATA := io.storeSrc << shift8
+  io.M_axi.AXI_WDATA := io.storeSrc
   io.M_axi.AXI_AWVALID := axi_awvalid
   io.M_axi.AXI_AWLEN := 0.U
   io.M_axi.AXI_AWSIZE := MuxLookup(io.exuOpt, "b010".U, Seq(
@@ -62,7 +58,7 @@ class LSU extends Module {
     SB -> "b0001".U,
     SH -> "b0011".U,
     SW -> "b1111".U
-  )) << shift
+  ))
   io.M_axi.AXI_WLAST := true.B
   io.M_axi.AXI_BREADY := axi_bready
 
@@ -95,7 +91,6 @@ class LSU extends Module {
   init_txn_ff := INIT_AXI_TXN
   init_txn_ff2 := init_txn_ff
   axi_axaddr := io.aluRes
-  shift := io.aluRes(1, 0)
   
   when(txn_pulse_store.asBool) {
     axi_awvalid := true.B
@@ -127,7 +122,7 @@ class LSU extends Module {
     axi_rready := false.B
   }
 
-  val axi_rdata = io.M_axi.AXI_RDATA >> shift8
+  val axi_rdata = io.M_axi.AXI_RDATA
   io.loadRes := MuxLookup(io.exuOpt, 0.U, Seq(
     LB -> Cat(Fill(24, axi_rdata(7)), axi_rdata(7, 0)),
     LH -> Cat(Fill(16, axi_rdata(15)), axi_rdata(15, 0)),

@@ -50,9 +50,9 @@ class IDU extends Module {
   val ALU_SLTU    = "d16".U(10.W)
   val ALU_XOR     = "d32".U(10.W)
   val ALU_SRL     = "d64".U(10.W)
-  val ALU_SRA     = "d512".U(10.W)
   val ALU_OR      = "d128".U(10.W)
   val ALU_AND     = "d256".U(10.W)
+  val ALU_SRA     = "d512".U(10.W)
 
   // EXU_SRC_SEL
   val EXU_SEL_REG = "b0001".U(4.W)
@@ -160,8 +160,8 @@ class IDU extends Module {
                        Mux(exu_opt === "b010".U, ALU_SLT,
                        Mux(exu_opt === "b011".U, ALU_SLTU,
                        Mux(exu_opt === "b100".U, ALU_XOR,
-                       Mux(exu_opt === "b101".U && o_if_unsigned, ALU_SRL,
-                       Mux(exu_opt === "b101".U && !o_if_unsigned, ALU_SRA,
+                       Mux(exu_opt === "b101".U && !o_if_unsigned, ALU_SRL,
+                       Mux(exu_opt === "b101".U && o_if_unsigned, ALU_SRA,
                        Mux(exu_opt === "b110".U, ALU_OR,
                        Mux(exu_opt === "b111".U, ALU_AND, ALU_ADD)))))))))))))
 

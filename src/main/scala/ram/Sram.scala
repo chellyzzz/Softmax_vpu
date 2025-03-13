@@ -88,6 +88,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             |  assign sram_AXI_RRESP	= axi_rresp;
             |  assign sram_AXI_RVALID	= axi_rvalid;
             |  assign sram_AXI_RLAST	= axi_rlast;
+            |  assign sram_AXI_RID    = 'b0;
             |
             |  always @( posedge clock)
             |  begin

@@ -11,6 +11,7 @@ class CpuCore extends Module {
     val io_master = new axi_master
     val flush  = Output(Bool())
     val ebreak = Output(Bool())
+    val diff = if (debug) Output(Bool()) else Output(UInt(0.W))
   })
   
   // Local constants for parameters
@@ -292,30 +293,37 @@ class CpuCore extends Module {
   exu2wbu_res        := exu_wbu_regs.io.o_res         
   io.ebreak          := exu_wbu_regs.io.o_ebreak        
   io.flush           := pc_update_en
-  
-  val wbu1 = Module(new WBU)
-  wbu1.io.i_pc_next := exu2wbu_pc_next
-  wbu1.io.i_pre_valid := exu2wbu_valid
-  wbu1.io.i_rd_addr := exu2wbu_rd_addr
-  wbu1.io.i_csr_addr := exu2wbu_csr_addr
-  wbu1.io.i_brch := exu2wbu_brch
-  wbu1.io.i_jal := exu2wbu_jal
-  wbu1.io.i_wen := exu2wbu_wen
-  wbu1.io.i_csr_wen := exu2wbu_csr_wen
-  wbu1.io.i_jalr := exu2wbu_jalr
-  wbu1.io.i_mret := exu2wbu_mret
-  wbu1.io.i_ecall := exu2wbu_ecall
-  wbu1.io.i_res := exu2wbu_res
 
-  pc_next           :=   wbu1.io.o_pc_next     
-  pc_update_en      :=   wbu1.io.o_pc_update           
-  wbu_rd_wdata      :=   wbu1.io.o_rd_wdata            
-  wbu_rd_addr       :=   wbu1.io.o_rd_addr         
-  wbu_csr_addr      :=   wbu1.io.o_csr_addr            
-  csr_rd_wdata      :=   wbu1.io.o_csr_rd_wdata        
-  wbu_wen           :=   wbu1.io.o_wbu_wen     
-  wbu_csr_wen       :=   wbu1.io.o_wbu_csr_wen     
-  wbu2exu_ready     :=   wbu1.io.o_pre_ready           
+
+  val wbu = Module(new WBU)
+  wbu.io.i_pc_next := exu2wbu_pc_next
+  wbu.io.i_pre_valid := exu2wbu_valid
+  wbu.io.i_rd_addr := exu2wbu_rd_addr
+  wbu.io.i_csr_addr := exu2wbu_csr_addr
+  wbu.io.i_brch := exu2wbu_brch
+  wbu.io.i_jal := exu2wbu_jal
+  wbu.io.i_wen := exu2wbu_wen
+  wbu.io.i_csr_wen := exu2wbu_csr_wen
+  wbu.io.i_jalr := exu2wbu_jalr
+  wbu.io.i_mret := exu2wbu_mret
+  wbu.io.i_ecall := exu2wbu_ecall
+  wbu.io.i_res := exu2wbu_res
+
+  if(Parameter.debug){
+    io.diff := wbu.io.diff
+    wbu.io.next := exu_wbu_regs.io.next
+
+  }
+
+  pc_next           :=   wbu.io.o_pc_next     
+  pc_update_en      :=   wbu.io.o_pc_update           
+  wbu_rd_wdata      :=   wbu.io.o_rd_wdata            
+  wbu_rd_addr       :=   wbu.io.o_rd_addr         
+  wbu_csr_addr      :=   wbu.io.o_csr_addr            
+  csr_rd_wdata      :=   wbu.io.o_csr_rd_wdata        
+  wbu_wen           :=   wbu.io.o_wbu_wen     
+  wbu_csr_wen       :=   wbu.io.o_wbu_csr_wen     
+  wbu2exu_ready     :=   wbu.io.o_pre_ready           
 
   // xbar
   xbar.io.sram <> io.io_master

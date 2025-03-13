@@ -6,6 +6,7 @@ object Parameter {
   val DataWidth: Int = 32  
   val OptWidth:  Int = 10  
   val RegAddrWidth: Int = 5 
+  val debug: Boolean = true  
 }
 
 
