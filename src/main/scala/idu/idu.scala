@@ -3,6 +3,7 @@ package cpu
 import chisel3._
 import chisel3.util._
 import Parameter._
+import cpu._
 
 class IDU extends Module {
   val io = IO(new Bundle {
@@ -16,6 +17,7 @@ class IDU extends Module {
     val o_alu_opt   = Output(UInt(OptWidth.W))
     val o_wen       = Output(Bool())
     val o_csr_wen   = Output(Bool())
+    val vtype_wen   = Output(Bool())
     val o_src_sel1  = Output(UInt(2.W))
     val o_src_sel2  = Output(UInt(3.W))
 
@@ -28,6 +30,8 @@ class IDU extends Module {
     val o_jalr      = Output(Bool())
     val o_ebreak    = Output(Bool())
     val o_fence_i   = Output(Bool())
+
+    val vec_idu     = Output(new IDU_VEC)    
   })
 
   /************************parameter**********************/
@@ -100,6 +104,10 @@ class IDU extends Module {
   val rs2      = io.ins(24, 20)
   val rd       = io.ins(11, 7)
 
+  io.vec_idu.vs1 := rs1
+  io.vec_idu.vs2 := rs2 
+  io.vec_idu.vd  := rd
+
   // Condition signals
   val TYPEI      = (opcode === TYPE_I)
   val TYPEI_LOAD = (opcode === TYPE_I_LOAD)
@@ -123,7 +131,7 @@ class IDU extends Module {
   val CSRRW = (TYPEEBRK && func3 === FUN3_CSRRW)
 
   // Immediate generation
-  io.o_imm := Mux(TYPEI || TYPEI_LOAD, Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
+  io.o_imm :=  Mux(TYPEI || TYPEI_LOAD, Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
                Mux(TYPELUI || TYPEAUIPC, Cat(io.ins(31, 12), 0.U(12.W)),
                Mux(TYPEJAL, Cat(Fill(12, io.ins(31)), io.ins(19, 12), io.ins(20), io.ins(30, 21), 0.U(1.W)),
                Mux(TYPEJALR, Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
@@ -134,12 +142,8 @@ class IDU extends Module {
   // Other signals
   io.o_rd    := rd
   io.o_rs1   := Mux(TYPEAUIPC || TYPELUI || TYPEJAL, 0.U(RegAddrWidth.W), rs1)
-  io.o_rs2   := Mux(TYPER || TYPEB || TYPES, rs2, 0.U(RegAddrWidth.W))
-  
-  io.o_csr_addr := Mux(TYPEEBRK, io.ins(31, 20), 0.U(12.W))
-  
-  io.o_wen := Mux(TYPES || TYPEB || TYPEFENCE, false.B, true.B)
-  io.o_csr_wen := CSRRS || CSRRW
+  io.o_rs2   := Mux(TYPER || TYPEB || TYPES, rs2, 0.U(RegAddrWidth.W))  
+  io.o_wen   := Mux(TYPES || TYPEB || TYPEFENCE, false.B, true.B)
   
   // Unsigned check logic
   val o_if_unsigned =  (TYPEI && func3 === "b101".U && func7(5)) || 
@@ -206,8 +210,22 @@ class IDU extends Module {
   io.o_jal   := (opcode === TYPE_JAL)
   io.o_jalr  := (opcode === TYPE_JALR)
 
+  //system 
+
+  val vector_contrl  = (opcode === OP_VEC.vset) && (func3 === "b111")
+  io.o_csr_wen := CSRRS || CSRRW
+  io.vtype_wen := vector_contrl
+
+  io.o_csr_addr := Mux(TYPEEBRK, io.ins(31, 20), 0.U(12.W))
+
   // Fence and ebreak control signals
-  io.o_fence_i := (opcode === TYPE_FENCE) && (func3 === "b001".U)
+  io.o_fence_i  := (opcode === TYPE_FENCE) && (func3 === "b001".U)
   io.o_ebreak   := (opcode === TYPE_EBRK) && (func3 === "b000".U) && (rs2(1, 0) === "b01".U)
 
+  // vector
+  io.vec_idu.o_vec_contrl := vector_contrl
+  io.vec_idu.o_vec_arith  := (opcode === OP_VEC.varith) && (func3.head === "b0")
+  io.vec_idu.o_vec_load   := (opcode === OP_VEC.vload)
+  io.vec_idu.o_vec_store  := (opcode === OP_VEC.vstore)
+  io.vec_idu.o_ins        := io.ins
 }

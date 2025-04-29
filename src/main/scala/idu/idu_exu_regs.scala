@@ -3,6 +3,7 @@ package cpu
 import chisel3._
 import chisel3.util._
 import Parameter._
+import cpu._
 
 class IDU_EXU_OUT extends Bundle{
   val pc = UInt(32.W)
@@ -31,6 +32,7 @@ class IDU_EXU_OUT extends Bundle{
 
 class IDU_EXU_Regs extends Module {
   val io = IO(new Bundle {
+    val vec_idu        = Input(new IDU_VEC)
     val i_pc           = Input(UInt(32.W))
     val i_pre_valid    = Input(Bool())
     val i_post_ready   = Input(Bool())
@@ -61,10 +63,12 @@ class IDU_EXU_Regs extends Module {
     val i_jalr         = Input(Bool())
     val i_fence_i      = Input(Bool())
     val i_ebreak       = Input(Bool())
+    
+    val out           = Output(new IDU_EXU_OUT)
+    val out_vec       = Output(new IDU_VEC)
 
-    val out = Output(new IDU_EXU_OUT)
-    val pre_ready    = Output(Bool())
-    val post_valid   = Output(Bool())
+    val pre_ready     = Output(Bool())
+    val post_valid    = Output(Bool())
   })
 
   val postValid = RegInit(false.B)
@@ -113,4 +117,6 @@ class IDU_EXU_Regs extends Module {
   }
   
   io.out <> out_reg
+
+  io.out_vec := RegEnable(io.vec_idu, io.i_pre_valid && io.i_post_ready)
 }

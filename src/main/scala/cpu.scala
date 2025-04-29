@@ -3,6 +3,7 @@ package core
 import chisel3._
 import chisel3.util._
 import cpu._
+import cpu.vector._
 import Parameter._
  
 class CpuCore extends Module {
@@ -185,6 +186,9 @@ class CpuCore extends Module {
   idu2ifu_ready:=  idu2exu_regs.io.pre_ready   
   idu2exu_valid:=  idu2exu_regs.io.post_valid  
 
+
+  idu2exu_regs.io.vec_idu := ifu2idu_regs.io.vec_idu
+
   idu2exu_regs.io.i_pc := ifu2idu_pc
   idu2exu_regs.io.i_imm := imm
   idu2exu_regs.io.i_csr_addr := idu_csr_raddr
@@ -264,7 +268,12 @@ class CpuCore extends Module {
   val exu_wbu_regs = withReset(reset.asBool | pc_update_en.asBool) {
     Module(new EXU_WBU_Regs)
   }
-  
+
+  val vec_decoder = Module(new VecDecoder)
+  vec_decoder.io.idu_in := idu2exu_regs.io.out_vec
+
+
+
   exu_wbu_regs.io.i_brch := exu_brch
   exu_wbu_regs.io.i_jal := idu2exu_jal
   exu_wbu_regs.io.i_wen := idu2exu_wen

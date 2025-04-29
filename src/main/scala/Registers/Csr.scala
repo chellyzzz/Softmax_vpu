@@ -56,3 +56,45 @@ class CSR extends Module {
   io.o_mtvec := Mux(io.i_ecall, mtvec, 0.U)
 }
 
+class VecCSR extends Module {
+  val io = IO(new Bundle {
+    val i_csr_wen = Input(Bool())
+
+    val i_csr_raddr = Input(UInt(12.W))
+    val o_csr_rdata = Output(UInt(DataWidth.W))
+
+    val i_csr_waddr = Input(UInt(12.W))
+    val i_csr_wdata = Input(UInt(32.W))
+  })
+
+  val vstart   = RegInit(0.U(32.W)) //Vector start position
+  val vxsat    = RegInit(0.U(32.W)) //Fixed-Point Saturate Flag
+  val vxrm     = RegInit(0.U(32.W)) //Fixed-Point Rounding Mode
+  val vcsr     = RegInit(0.U(32.W)) //Vector control and status register
+  val vl       = RegInit(0.U(32.W)) // length
+  val vtype    = RegInit(0.U(32.W)) //Vector data type register
+  val vlenb    = WireInit((VLEN/8).U(32.W)) //VLEN/8 (vector register length in bytes)
+
+  io.o_csr_rdata := MuxCase(0.U, Array(
+    (io.i_csr_raddr === 0x008.U(12.W)) -> vstar,
+    (io.i_csr_raddr === 0x009.U(12.W)) -> vxsat,
+    (io.i_csr_raddr === 0x00A.U(12.W)) -> vxrm ,
+    (io.i_csr_raddr === 0x00F.U(12.W)) -> vcsr ,
+    (io.i_csr_raddr === 0xC20.U(12.W)) -> vl   ,
+    (io.i_csr_raddr === 0xC21.U(12.W)) -> vtype,
+    (io.i_csr_raddr === 0xC22.U(12.W)) -> vlenb,
+  ))
+
+  when(io.i_csr_wen) {
+    switch(io.i_csr_waddr) {
+      is(0x008.U(12.W)) { vstart := io.i_csr_wdata }
+      is(0x009.U(12.W)) { vxsat  := io.i_csr_wdata }
+      is(0x00A.U(12.W)) { vxrm   := io.i_csr_wdata }
+      is(0x00F.U(12.W)) { vcsr   := io.i_csr_wdata }
+      is(0xC20.U(12.W)) { vl     := io.i_csr_wdata }
+      is(0xC21.U(12.W)) { vtype  := io.i_csr_wdata }
+    }
+  }
+
+}
+

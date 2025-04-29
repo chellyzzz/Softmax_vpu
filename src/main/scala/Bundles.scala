@@ -69,3 +69,19 @@ class axi_slave extends Bundle{
 }
 
 
+class IDU_VEC extends Bundle {
+    val o_vec_contrl = Bool()
+    val o_vec_arith  = Bool()
+    val o_vec_load   = Bool()
+    val o_vec_store  = Bool()
+    val o_ins        = UInt(32.W)
+    val vs1_addr     = UInt(5.W)
+    val rs1_data     = UInt(32.W)
+    val vs2          = UInt(5.W)
+    val rs2_data     = UInt(32.W)
+    val vd           = UInt(5.W)   
+}
+
+class IDU_VEC extends IDU_VEC{
+    val vtype = UInt(32.W)
+}

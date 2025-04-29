@@ -6,6 +6,7 @@ object Parameter {
   val DataWidth: Int = 32  
   val OptWidth:  Int = 10  
   val RegAddrWidth: Int = 5 
+  val VLEN : Int = 128
   val debug: Boolean = true  
 }
 
@@ -21,4 +22,12 @@ object OP_ALU{
   def Or     = "b00001".U(Parameter.OptWidth.W)
   def And    = "b00001".U(Parameter.OptWidth.W)
   def Sra    = "b00001".U(Parameter.OptWidth.W)
+}
+
+object OP_VEC {
+  def width = 7
+  def vset   = "b1010111".U(width.W)
+  def varith = "b1010111".U(width.W)
+  def vload  = "b0000111".U(width.W)
+  def vstore = "b0100111".U(width.W)  
 }
