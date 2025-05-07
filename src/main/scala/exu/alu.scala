@@ -37,3 +37,33 @@ class ALU extends Module {
   ))
 }
 
+class Get_Vset extends Module {
+  val io = IO(new Bundle {
+    val vset = Input(new IDU_VSET)
+    val vl   = Output(UInt(32.W))
+  })
+
+  val vtype = io.vset.vtype
+  val sew   = vtype(5, 3)
+  val lmul  = vtype(2, 0)
+  val avl   = io.vset.avl
+
+  // val sew_bits = MuxLookup(sew, 0.U(3.W), Seq(
+  //   0.U -> 3.U(10.W),   // 0b000
+  //   1.U -> 4.U(10.W), // 0b001
+  //   2.U -> 5.U(10.W), // 0b010
+  //   3.U -> 6.U(10.W), // 0b011
+  // ))
+  
+  // val lmul_num = MuxLookup(lmul, 0.U(3.W), Seq(
+  //   "b000".U -> 0.U(3.W), // 0b000
+  //   "b001".U -> 1.U(3.W), // 0b001
+  //   "b010".U -> 2.U(3.W), // 0b010
+  //   "b011".U -> 3.U(3.W), // 0b011
+  // ))
+
+  val vlmax = (((VLENB.U << lmul)) >> sew)
+
+  val vl = Mux(avl > vlmax, vlmax, avl)
+  io.vl := vl
+}

@@ -45,13 +45,13 @@ class IFU extends Module {
   val axi_rready  = RegInit(false.B)
 
   // AXI Assignments
-  io.ifu.AXI_ARADDR := pc_next
-  io.ifu.AXI_ARVALID := axi_arvalid
-  io.ifu.AXI_ARID := 0.U
-  io.ifu.AXI_ARLEN := "b010".U
-  io.ifu.AXI_ARSIZE := "b010".U
-  io.ifu.AXI_ARBURST := "b01".U
-  io.ifu.AXI_RREADY := axi_rready
+  io.ifu.AXI_ARADDR   := pc_next
+  io.ifu.AXI_ARVALID  := axi_arvalid
+  io.ifu.AXI_ARID     := 0.U
+  io.ifu.AXI_ARLEN    := "b0".U
+  io.ifu.AXI_ARSIZE   := "b010".U
+  io.ifu.AXI_ARBURST  := "b01".U
+  io.ifu.AXI_RREADY   := axi_rready
 
   io.ifu.AXI_AWADDR  := 0.U
   io.ifu.AXI_AWVALID := 0.U

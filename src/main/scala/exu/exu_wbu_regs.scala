@@ -4,9 +4,18 @@ import chisel3._
 import chisel3.util._
 import Parameter._
 
+class EXU_VSET extends Bundle {
+  val vtype = UInt(32.W)
+  val vl    = UInt(32.W)
+  val vtype_wen = Bool()
+}
 
 class EXU_WBU_Regs extends Module {
   val io = IO(new Bundle {
+    //
+    val exu_vset    = Input(new EXU_VSET)
+    val wbu_vset    = Output(new EXU_VSET)
+
     val i_brch      = Input(Bool())
     val i_jal       = Input(Bool())
     val i_wen       = Input(Bool())
@@ -102,4 +111,6 @@ class EXU_WBU_Regs extends Module {
   io.o_ecall := o_ecall
   io.o_res := o_res
   io.o_ebreak := o_ebreak
+
+  io.wbu_vset := RegNext(Mux(io.i_post_ready && io.o_post_valid, io.exu_vset, 0.U.asTypeOf(new EXU_VSET)))
 }

@@ -10,13 +10,12 @@ SRC += $(INCLUDE_DIR)/start.S
 
 
 # CFLAGS  += -O2 -march=rv64gv_zvfh -mabi=lp64d -I$(INCLUDE_DIR)
-CFLAGS  += -O2 -march=rv32gv -mabi=ilp32d -I$(INCLUDE_DIR)
+CFLAGS  += -O -march=rv32gv -mabi=ilp32d -I$(INCLUDE_DIR)
 
 CFLAGS  += -nostdlib  -fPIC
 LDFLAGS += -T $(INCLUDE_DIR)/linker.ld
 
 
-# 生成规则
 $(TARGET): $(SRC) $(wildcard $(INCLUDE_DIR)/*.h)
 	# make gen_data
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(TARGET)

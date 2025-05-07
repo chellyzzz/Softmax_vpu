@@ -1,11 +1,14 @@
 package cpu
 
 import chisel3._
+import cpu._
 import chisel3.util._
 import Parameter._
 
 class WBU extends Module {
   val io = IO(new Bundle {
+    val wbu_vset = Input(new EXU_VSET)
+
     val i_pre_valid = Input(Bool())
     val i_wen = Input(Bool())
     val i_rd_addr = Input(UInt(RegAddrWidth.W))
@@ -18,7 +21,7 @@ class WBU extends Module {
     val i_ecall = Input(Bool())
     val i_pc_next = Input(UInt(DataWidth.W))
     val i_res = Input(UInt(DataWidth.W))
-
+    
     val o_pc_next = Output(UInt(DataWidth.W))
     val o_rd_wdata = Output(UInt(DataWidth.W))
     val o_csr_rd_wdata = Output(UInt(DataWidth.W))
@@ -35,8 +38,8 @@ class WBU extends Module {
   })
 
   // Output assignments
-  io.o_rd_wdata := io.i_res
-  io.o_csr_rd_wdata := io.i_res
+  io.o_rd_wdata := Mux(io.wbu_vset.vtype_wen, io.wbu_vset.vl, io.i_res)
+  io.o_csr_rd_wdata := Mux(io.wbu_vset.vtype_wen, io.wbu_vset.vtype, io.i_res)
   io.o_wbu_wen := io.i_wen
   io.o_wbu_csr_wen := io.i_csr_wen
   io.o_rd_addr := io.i_rd_addr

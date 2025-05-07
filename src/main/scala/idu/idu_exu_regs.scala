@@ -32,15 +32,29 @@ class IDU_EXU_OUT extends Bundle{
 
 class IDU_EXU_Regs extends Module {
   val io = IO(new Bundle {
-    val vec_idu        = Input(new IDU_VEC)
-    val i_pc           = Input(UInt(32.W))
+    // vector set signals
+    val vec_set     = Input(Bool())
+    val vec_set_zimm= Input(UInt(11.W))
+    val vec_set_uimm= Input(UInt(5.W))
+    val vec_set_vtype_sel_zimm= Input(Bool())
+    val vec_set_avl_sel_uimm  = Input(Bool())
+    val out_vset      = Output(new IDU_VSET)
+    val out           = Output(new IDU_EXU_OUT)
+    // val out_vec       = Output(new IDU_VEC)
+
+
+    // control signals
     val i_pre_valid    = Input(Bool())
     val i_post_ready   = Input(Bool())
+    val pre_ready     = Output(Bool())
+    val post_valid    = Output(Bool())
 
+    // scalar
+    val i_pc           = Input(UInt(32.W))
     val i_imm          = Input(UInt(DataWidth.W))
     val i_csr_addr     = Input(UInt(12.W))
-    val i_src1         = Input(UInt(DataWidth.W))
-    val i_src2         = Input(UInt(DataWidth.W))
+    val src1         = Input(UInt(DataWidth.W))
+    val src2         = Input(UInt(DataWidth.W))
     val i_rd           = Input(UInt(4.W))
     val i_csr_rs2      = Input(UInt(DataWidth.W))
     val i_csr_src_sel  = Input(Bool())
@@ -63,14 +77,10 @@ class IDU_EXU_Regs extends Module {
     val i_jalr         = Input(Bool())
     val i_fence_i      = Input(Bool())
     val i_ebreak       = Input(Bool())
-    
-    val out           = Output(new IDU_EXU_OUT)
-    val out_vec       = Output(new IDU_VEC)
-
-    val pre_ready     = Output(Bool())
-    val post_valid    = Output(Bool())
+  
   })
 
+  dontTouch(io.out_vset)
   val postValid = RegInit(false.B)
   
   io.post_valid := postValid
@@ -79,8 +89,8 @@ class IDU_EXU_Regs extends Module {
   val selSrc1 = Wire(UInt(DataWidth.W))
   val selSrc2 = Wire(UInt(DataWidth.W))
 
-  selSrc1 := Mux(io.i_ecall, io.i_mtvec, Mux(io.i_mret, io.i_mepc, io.i_src1))
-  selSrc2 := Mux(io.i_csr_src_sel, io.i_csr_rs2, io.i_src2)
+  selSrc1 := Mux(io.i_ecall, io.i_mtvec, Mux(io.i_mret, io.i_mepc, io.src1))
+  selSrc2 := Mux(io.i_csr_src_sel, io.i_csr_rs2, io.src2)
 
   when(io.i_pre_valid) {
     postValid := true.B
@@ -118,5 +128,18 @@ class IDU_EXU_Regs extends Module {
   
   io.out <> out_reg
 
-  io.out_vec := RegEnable(io.vec_idu, io.i_pre_valid && io.i_post_ready)
+  // vector set signals
+  val vtype_control_reg = Reg(new IDU_VSET)
+  val vtype = Mux(io.vec_set_vtype_sel_zimm, io.vec_set_zimm, io.src2)
+  val avl   = Mux(io.vec_set_avl_sel_uimm, io.vec_set_uimm, io.src1)
+
+  when(io.i_post_ready && io.post_valid) {
+    vtype_control_reg.vtype_wen := io.vec_set
+    vtype_control_reg.vtype     := vtype
+    vtype_control_reg.avl       := avl
+  }.elsewhen(io.i_post_ready && !io.post_valid) {
+    vtype_control_reg := 0.U.asTypeOf(new IDU_VSET)
+  }
+
+  io.out_vset := vtype_control_reg
 }

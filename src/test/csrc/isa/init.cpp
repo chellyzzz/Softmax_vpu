@@ -1,7 +1,7 @@
 #include <isa.h>
 #include <mem.h>
 
-static const char *img_file = "/home/chelly/grad/test/build/main.bin";
+static const char *img_file = "/home/chelly/my_grad/test/build/main.bin";
 
 static const uint32_t img [] = {
   0xfff78793,  // addi a5, a5, 0xfff

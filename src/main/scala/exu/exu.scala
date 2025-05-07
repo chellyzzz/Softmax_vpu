@@ -5,8 +5,14 @@ import chisel3.util._
 import Parameter._
 import cpu._
 
+
 class EXU extends Module {
   val io = IO(new Bundle {
+    // vector set signals
+    val idu_vset    = Input(new IDU_VSET) 
+    val exu_vset    = Output(new EXU_VSET)
+
+    // scalar signals
     val i_src1      = Input(UInt(DataWidth.W))
     val i_src2      = Input(UInt(DataWidth.W))
     val i_pc        = Input(UInt(DataWidth.W))
@@ -58,7 +64,7 @@ class EXU extends Module {
 
   // Handshake logic
   io.o_post_valid := Mux(ifLsu, (io.lsu.AXI_RVALID && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, postValid)
-  io.o_pre_ready := Mux(ifLsu, (io.lsu.AXI_RVALID && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, true.B)
+  io.o_pre_ready  := Mux(ifLsu, (io.lsu.AXI_RVALID && io.lsu.AXI_RREADY) || io.lsu.AXI_BREADY, true.B)
 
   
   // ALU source selection
@@ -118,4 +124,12 @@ class EXU extends Module {
 
   io.o_res := Mux(io.i_load, loadRes, aluRes)
   io.o_brch := io.i_brch && brchRes
+
+
+  val get_vl = Module(new Get_Vset)
+  get_vl.io.vset := io.idu_vset
+  io.exu_vset.vl := get_vl.io.vl 
+  io.exu_vset.vtype := io.idu_vset.vtype
+  io.exu_vset.vtype_wen := io.idu_vset.vtype_wen
+
 }
