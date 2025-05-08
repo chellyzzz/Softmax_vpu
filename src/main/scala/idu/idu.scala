@@ -36,7 +36,16 @@ class IDU extends Module {
     val vec_set_vtype_sel_zimm= Output(Bool())
     val vec_set_avl_sel_uimm  = Output(Bool())
 
-    // val vec_idu     = Output(new IDU_VEC)    
+    val vec_imm     = Output(UInt(7.W))
+    val vec_arith   = Output(Bool())
+    val vec_load    = Output(Bool())
+    val vec_store   = Output(Bool())
+    val is_vs1_vec  = Output(Bool())
+    val is_vs2_vec  = Output(Bool())
+    val is_vd_vec   = Output(Bool())
+    val addr_vs1    = Output(UInt(5.W))
+    val addr_vs2    = Output(UInt(5.W))
+    val addr_vd     = Output(UInt(5.W))
   })
 
 
@@ -185,12 +194,29 @@ class IDU extends Module {
   io.o_fence_i  := (opcode === OPCODE.TYPE_FENCE) && (func3 === "b001".U)
   io.o_ebreak   := (opcode === OPCODE.TYPE_EBRK) && (func3 === "b000".U) && (rs2(1, 0) === "b01".U)
 
-  // vector
-  // io.vec_idu.o_vec_arith  := VARITH
-  // io.vec_idu.o_vec_load   := VLOAD 
-  // io.vec_idu.o_vec_store  := VSTORE
-  // io.vec_idu.o_ins        := io.ins
+  // vector load store
+  io.vec_load   := VLOAD 
+  io.vec_store  := VSTORE
+  
+  io.vec_imm    := io.ins(31, 25)
+  io.addr_vs1   := io.ins(19, 15)
+  io.addr_vs2   := io.ins(24,20)
+  io.addr_vd    := io.ins(11,7)
 
+  val mop = io.ins(27,26)
+  io.is_vs1_vec    := ~(VLOAD || VSTORE)
+  io.is_vs2_vec    := (VLOAD || VSTORE) && (mop === VLSU_MOP.unit_stride || mop === VLSU_MOP.indexed_unordered)
+  io.is_vd_vec     := VLOAD || VSTORE
+  
+  // if (debug) {
+  //   val lumop = io.ins(24, 20)
+  //   when(lumop =/= "b000".U && (VLOAD || VSTORE)) {
+  //     stop() // Use Chisel's stop() for simulation termination
+  //   }
+  // }
+
+  // vector arith
+  io.vec_arith  := VARITH
   // vector set src
   io.vec_set                := VSET 
   io.vec_set_zimm           := Mux(io.ins.head(1).asBool, io.ins(30), 1.U(1.W)) ## io.ins(29,20)

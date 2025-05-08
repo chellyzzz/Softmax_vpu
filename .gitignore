@@ -15,3 +15,5 @@ logs/
 .bloop/
 
 !/test/build
+
+sram.v

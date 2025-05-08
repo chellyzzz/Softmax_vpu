@@ -16,6 +16,8 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   setInline("sram.v",
             """
 
+
+
   module ram_simulation #(
       parameter                           ADDR_WIDTH = 32            ,
       parameter                           DATA_WIDTH = 32            ,
@@ -255,40 +257,42 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   end       
   always @( posedge clock )
   begin
-      if ( reset == 1'b1 ) begin
-          axi_rvalid <= 0;
-          axi_rresp  <= 0;
-          axi_rlast  <= 0;
-          read_count  <= 8'b0; 
-          reading    <= 0;
-          current_raddr <= 32'b0;
-      end 
-      else if ((axi_arready && sram_AXI_ARVALID) && ~axi_rvalid && ~reading) begin
-            // Valid read data is available at the read data bus
-            axi_rvalid <= 1'b1;
-            axi_rresp  <= 2'b1; // 'OKAY' response
-            axi_rlast <= 1'b0;
-            read_count  <= 8'b0; 
-            reading   <= 1'b1;
-        end   
-        else if(reading) begin
-                if(axi_rvalid && sram_AXI_RREADY) begin
-                read_count <= read_count + 1'b1;
-                if(read_count == axi_arlen) begin
-                    reading <= 0;
-                    axi_rvalid <= 1'b0;
-                    axi_rresp  <= 2'b0; // 'IDLE' response
-                    axi_rlast <= 1'b1;
-                end
-                else begin
-                    case (axi_arburst)
-                        2'b01: current_raddr <= current_raddr + read_length; // INCR
-                        2'b00: current_raddr <= current_raddr;                     // FIXED
-                        default: current_raddr <= current_raddr;                   // WRAP: 可扩展
-                    endcase
-                end
-            end   
+    if ( reset == 1'b1 ) begin
+        axi_rvalid <= 0;
+        axi_rresp  <= 0;
+        axi_rlast  <= 0;
+        read_count  <= 8'b0; 
+        reading    <= 0;
+        current_raddr <= 32'b0;
+    end 
+    else if (~reading) begin
+        axi_rresp  <= 2'b1; // 'OKAY' response
+        axi_rlast <= 1'b0;
+        read_count  <= 8'b0; 
+        if((axi_arready && sram_AXI_ARVALID) && ~axi_rvalid) begin
+        // Valid read data is available at the read data bus
+        axi_rvalid <= 1'b1;
+        reading   <= 1'b1;
         end
+    end   
+    else if(reading) begin
+            if(axi_rvalid && sram_AXI_RREADY) begin
+            read_count <= read_count + 1'b1;
+            if(read_count == axi_arlen) begin
+                reading <= 0;
+                axi_rvalid <= 1'b0;
+                axi_rresp  <= 2'b0; // 'IDLE' response
+                axi_rlast <= 1'b1;
+            end
+            else begin
+                case (axi_arburst)
+                    2'b01: current_raddr <= current_raddr + read_length; // INCR
+                    2'b00: current_raddr <= current_raddr;                     // FIXED
+                    default: current_raddr <= current_raddr;                   // WRAP: 可扩展
+                endcase
+            end
+        end   
+    end
   end    
 
 
@@ -322,8 +326,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   end    
 
 endmodule
-
-
 
 
 

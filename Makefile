@@ -20,8 +20,6 @@ $(TOP_V): $(SCALA_FILE)
 	@mkdir -p $(@D)
 	mill $(TOP).runMain $(MAIN) -td $(@D) --output-file $(@F)
 
-verilog: $(TOP_V)
-
 # C flags
 INC_PATH += $(abspath ./src/test/csrc/include)
 INCFLAGS = $(addprefix -I, $(INC_PATH))

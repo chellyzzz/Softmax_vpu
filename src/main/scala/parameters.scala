@@ -59,3 +59,10 @@ object OPCODE {
   def vload       = "b0000111".U(7.W)
   def vstore      = "b0100111".U(7.W)  
 }
+
+object VLSU_MOP {
+  def unit_stride       = "b00".U(2.W)
+  def indexed_unordered = "b01".U(2.W)     
+  def strided           = "b10".U(2.W) 
+  def indexed_ordered   = "b11".U(2.W)   
+}

@@ -57,7 +57,7 @@ void reg_update(){
   // cpu.csr.mtvec = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__Csrs__DOT__mtvec;
   if(top->rootp->top__DOT__cpu__DOT__wbu__DOT__o_pc_next != 0){
     cpu.pc = top->rootp->top__DOT__cpu__DOT__wbu__DOT__o_pc_next;
-    if(cpu.pc == 0x80000064){
+    if(cpu.pc == 0x80000060){
       if_stop = true;
     }
   }

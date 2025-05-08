@@ -33,14 +33,24 @@ class IDU_EXU_OUT extends Bundle{
 class IDU_EXU_Regs extends Module {
   val io = IO(new Bundle {
     // vector set signals
-    val vec_set     = Input(Bool())
-    val vec_set_zimm= Input(UInt(11.W))
-    val vec_set_uimm= Input(UInt(5.W))
-    val vec_set_vtype_sel_zimm= Input(Bool())
-    val vec_set_avl_sel_uimm  = Input(Bool())
-    val out_vset      = Output(new IDU_VSET)
-    val out           = Output(new IDU_EXU_OUT)
-    // val out_vec       = Output(new IDU_VEC)
+    val vec_set                 = Input(Bool())
+    val vec_set_zimm            = Input(UInt(11.W))
+    val vec_set_uimm            = Input(UInt(5.W))
+    val vec_set_vtype_sel_zimm  = Input(Bool())
+    val vec_set_avl_sel_uimm    = Input(Bool())
+    val is_vs1_vec              = Input(Bool())
+    val is_vs2_vec              = Input(Bool())
+    val is_vd_vec               = Input(Bool())
+    val addr_vs1                = Input(UInt(5.W))
+    val addr_vs2                = Input(UInt(5.W))
+    val addr_vd                 = Input(UInt(5.W))
+    val vec_imm                 = Input(UInt(7.W))
+    val vec_arith               = Input(Bool())
+    val vec_load                = Input(Bool())
+    val vec_store               = Input(Bool())
+    val out_vset                = Output(new IDU_VSET)
+    val out_vec                 = Output(new IDU_VEC)
+
 
 
     // control signals
@@ -53,8 +63,8 @@ class IDU_EXU_Regs extends Module {
     val i_pc           = Input(UInt(32.W))
     val i_imm          = Input(UInt(DataWidth.W))
     val i_csr_addr     = Input(UInt(12.W))
-    val src1         = Input(UInt(DataWidth.W))
-    val src2         = Input(UInt(DataWidth.W))
+    val src1           = Input(UInt(DataWidth.W))
+    val src2           = Input(UInt(DataWidth.W))
     val i_rd           = Input(UInt(4.W))
     val i_csr_rs2      = Input(UInt(DataWidth.W))
     val i_csr_src_sel  = Input(Bool())
@@ -77,7 +87,8 @@ class IDU_EXU_Regs extends Module {
     val i_jalr         = Input(Bool())
     val i_fence_i      = Input(Bool())
     val i_ebreak       = Input(Bool())
-  
+    val out                     = Output(new IDU_EXU_OUT)
+
   })
 
   dontTouch(io.out_vset)
@@ -133,13 +144,33 @@ class IDU_EXU_Regs extends Module {
   val vtype = Mux(io.vec_set_vtype_sel_zimm, io.vec_set_zimm, io.src2)
   val avl   = Mux(io.vec_set_avl_sel_uimm, io.vec_set_uimm, io.src1)
 
+  val vec_reg = Reg(new IDU_VEC)
+
   when(io.i_post_ready && io.post_valid) {
     vtype_control_reg.vtype_wen := io.vec_set
     vtype_control_reg.vtype     := vtype
     vtype_control_reg.avl       := avl
+
+    vec_reg.vec_arith := io.vec_arith 
+    vec_reg.vec_load  := io.vec_load  
+    vec_reg.vec_store := io.vec_store 
+    vec_reg.is_vs1_vec:= io.is_vs1_vec
+    vec_reg.is_vs2_vec:= io.is_vs2_vec
+    vec_reg.is_vd_vec := io.is_vd_vec 
+    vec_reg.addr_vs1  := io.addr_vs1  
+    vec_reg.addr_vs2  := io.addr_vs2  
+    vec_reg.addr_vd   := io.addr_vd   
+    vec_reg.rs1       := io.src1       
+    vec_reg.rs2       := io.src2       
+    vec_reg.imm       := io.vec_imm
+    vec_reg.func3     := io.i_exu_opt      
   }.elsewhen(io.i_post_ready && !io.post_valid) {
     vtype_control_reg := 0.U.asTypeOf(new IDU_VSET)
+    vec_reg := 0.U.asTypeOf(new IDU_VEC)
   }
 
   io.out_vset := vtype_control_reg
+  io.out_vec  := vec_reg
+
+  dontTouch(io.out_vec)
 }

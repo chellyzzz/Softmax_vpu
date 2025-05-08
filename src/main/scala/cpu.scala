@@ -192,6 +192,16 @@ class CpuCore (
   idu2exu_regs.io.vec_set_uimm := idu.io.vec_set_uimm
   idu2exu_regs.io.vec_set_vtype_sel_zimm := idu.io.vec_set_vtype_sel_zimm
   idu2exu_regs.io.vec_set_avl_sel_uimm   := idu.io.vec_set_avl_sel_uimm  
+  idu2exu_regs.io.is_vs1_vec  := idu.io.is_vs1_vec   
+  idu2exu_regs.io.is_vs2_vec  := idu.io.is_vs2_vec   
+  idu2exu_regs.io.is_vd_vec   := idu.io.is_vd_vec
+  idu2exu_regs.io.addr_vs1    := idu.io.addr_vs1 
+  idu2exu_regs.io.addr_vs2    := idu.io.addr_vs2 
+  idu2exu_regs.io.addr_vd     := idu.io.addr_vd  
+  idu2exu_regs.io.vec_imm     := idu.io.vec_imm    
+  idu2exu_regs.io.vec_arith   := idu.io.vec_arith 
+  idu2exu_regs.io.vec_load    := idu.io.vec_load     
+  idu2exu_regs.io.vec_store   := idu.io.vec_store   
   //
 
   idu2exu_regs.io.i_pc := ifu2idu_pc
