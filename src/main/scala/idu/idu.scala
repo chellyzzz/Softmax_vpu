@@ -102,7 +102,7 @@ class IDU extends Module {
   val VARITH     = (opcode === OPCODE.varith) && (func3.head(1) === "b0".U(1.W))
   val VLOAD      = (opcode === OPCODE.vload)
   val VSTORE     = (opcode === OPCODE.vstore)
-  
+  val is_vec     = VSET || VSETIVLI || VARITH || VLOAD|| VSTORE
   io.o_imm := LookupTreeDefault(opcode, 0.U(32.W), List(
         OPCODE.TYPE_I       -> Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
         OPCODE.TYPE_I_LOAD  -> Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
@@ -111,14 +111,15 @@ class IDU extends Module {
         OPCODE.TYPE_JAL     -> Cat(Fill(12, io.ins(31)), io.ins(19, 12), io.ins(20), io.ins(30, 21), 0.U(1.W)),
         OPCODE.TYPE_JALR    -> Cat(Fill(20, io.ins(31)), io.ins(31, 20)),
         OPCODE.TYPE_B       -> Cat(Fill(20, io.ins(31)), io.ins(7), io.ins(30, 25), io.ins(11, 8), 0.U(1.W)),
-        OPCODE.TYPE_S       -> Cat(Fill(20, io.ins(31)), io.ins(31, 25), io.ins(11, 7))
+        OPCODE.TYPE_S       -> Cat(Fill(20, io.ins(31)), io.ins(31, 25), io.ins(11, 7)
+        )
     ))
 
   // Other signals
   io.o_rd    := rd
   io.o_rs1   := Mux(TYPEAUIPC || TYPELUI || TYPEJAL|| VSETIVLI, 0.U(RegAddrWidth.W), rs1)
   io.o_rs2   := Mux(TYPER || TYPEB || TYPES || VSETIVLI, rs2, 0.U(RegAddrWidth.W))  
-  io.o_wen   := Mux(TYPES || TYPEB || TYPEFENCE, false.B, true.B)
+  io.o_wen   := Mux(TYPES || TYPEB || TYPEFENCE || is_vec, false.B, true.B)
   
   // Unsigned check logic
   val o_if_unsigned =  (TYPEI && func3 === "b101".U && func7(5)) || 

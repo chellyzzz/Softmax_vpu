@@ -17,9 +17,6 @@ class CpuCore (
     val diff = if (debug) Output(Bool()) else Output(UInt(0.W))
   })
   
-  // Local constants for parameters
-  val CSR_ADDR = 12
-
   // Define various signal types
   val imm = Wire(UInt(DataWidth.W))
   val idu_addr_rs1 = Wire(UInt(RegAddrWidth.W))

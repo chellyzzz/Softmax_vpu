@@ -49,7 +49,7 @@ class IDU_EXU_Regs extends Module {
     val vec_load                = Input(Bool())
     val vec_store               = Input(Bool())
     val out_vset                = Output(new IDU_VSET)
-    val out_vec                 = Output(new IDU_VEC)
+    val out_vec                 = Output(new VDecInput)
 
 
 
@@ -141,32 +141,32 @@ class IDU_EXU_Regs extends Module {
 
   // vector set signals
   val vtype_control_reg = Reg(new IDU_VSET)
-  val vtype = Mux(io.vec_set_vtype_sel_zimm, io.vec_set_zimm, io.src2)
-  val avl   = Mux(io.vec_set_avl_sel_uimm, io.vec_set_uimm, io.src1)
+  val vtype             = Mux(io.vec_set_vtype_sel_zimm, io.vec_set_zimm, io.src2)
+  val avl               = Mux(io.vec_set_avl_sel_uimm, io.vec_set_uimm, io.src1)
 
-  val vec_reg = Reg(new IDU_VEC)
+  val vec_reg = Reg(new VDecInput)
 
   when(io.i_post_ready && io.post_valid) {
     vtype_control_reg.vtype_wen := io.vec_set
     vtype_control_reg.vtype     := vtype
     vtype_control_reg.avl       := avl
 
-    vec_reg.vec_arith := io.vec_arith 
-    vec_reg.vec_load  := io.vec_load  
-    vec_reg.vec_store := io.vec_store 
-    vec_reg.is_vs1_vec:= io.is_vs1_vec
-    vec_reg.is_vs2_vec:= io.is_vs2_vec
-    vec_reg.is_vd_vec := io.is_vd_vec 
-    vec_reg.addr_vs1  := io.addr_vs1  
-    vec_reg.addr_vs2  := io.addr_vs2  
-    vec_reg.addr_vd   := io.addr_vd   
-    vec_reg.rs1       := io.src1       
-    vec_reg.rs2       := io.src2       
-    vec_reg.imm       := io.vec_imm
-    vec_reg.func3     := io.i_exu_opt      
+    vec_reg.vec_arith           := io.vec_arith 
+    vec_reg.vec_load            := io.vec_load  
+    vec_reg.vec_store           := io.vec_store 
+    vec_reg.is_vs1_vec          := io.is_vs1_vec
+    vec_reg.is_vs2_vec          := io.is_vs2_vec
+    vec_reg.is_vd_vec           := io.is_vd_vec 
+    vec_reg.addr_vs1            := io.addr_vs1  
+    vec_reg.addr_vs2            := io.addr_vs2  
+    vec_reg.addr_vd             := io.addr_vd   
+    vec_reg.rs1                 := io.src1       
+    vec_reg.rs2                 := io.src2       
+    vec_reg.imm                 := io.vec_imm
+    vec_reg.func3               := io.i_exu_opt      
   }.elsewhen(io.i_post_ready && !io.post_valid) {
     vtype_control_reg := 0.U.asTypeOf(new IDU_VSET)
-    vec_reg := 0.U.asTypeOf(new IDU_VEC)
+    vec_reg := 0.U.asTypeOf(new VDecInput)
   }
 
   io.out_vset := vtype_control_reg

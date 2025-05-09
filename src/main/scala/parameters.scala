@@ -6,6 +6,7 @@ object Parameter {
   val DataWidth: Int = 32  
   val OptWidth:  Int = 10  
   val RegAddrWidth: Int = 5 
+  val CSR_ADDR : Int = 12
   val VLEN : Int = 128
   val VLENB : Int = VLEN / 8
   val debug: Boolean = true  
@@ -39,7 +40,6 @@ object OP_ALU{
 
 object OP_VEC {
   def width = 7
-
 }
 
 object OPCODE {
@@ -66,3 +66,4 @@ object VLSU_MOP {
   def strided           = "b10".U(2.W) 
   def indexed_ordered   = "b11".U(2.W)   
 }
+

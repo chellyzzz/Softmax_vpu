@@ -6,17 +6,23 @@ import cpu.vector.utils._
 import cpu.vector.params.VParam._
 
 class VControl extends Bundle {
-  val vfadd = Bool()
-  val vfma = Bool()
-  val vfdiv = Bool()
-  val vfcvt = Bool()
-  val vm = Bool()
-  val rm  = UInt(2.W)
-  val futype = Cat(vfadd, vfma, vfdiv, vfcvt)
+  def vload  = Bool()
+  def vstore = Bool()
+  def varith = Bool()
 
+  val vm    = Bool()
+  val rm    = UInt(2.W)
+  val fuoptype = Cat(vload, vstore, varith)
+  val futype = Cat(vfadd, vfma, vfdiv, vfcvt)
+  
   val lsrc = Vec(2, UInt(5.W))
   val ldst = UInt(5.W)
   
+}
+
+class VDecOutput extends Bundle{
+    val vctrl = new VControl
+
 }
 
 class VExuInput extends Bundle {
@@ -31,3 +37,4 @@ class VExuOutput extends Bundle {
   val vxsat     = Bool()
   val vctrl     = new VControl
 }
+

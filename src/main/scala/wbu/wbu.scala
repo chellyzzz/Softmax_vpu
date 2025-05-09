@@ -40,7 +40,7 @@ class WBU extends Module {
   // Output assignments
   io.o_rd_wdata := Mux(io.wbu_vset.vtype_wen, io.wbu_vset.vl, io.i_res)
   io.o_csr_rd_wdata := Mux(io.wbu_vset.vtype_wen, io.wbu_vset.vtype, io.i_res)
-  io.o_wbu_wen := io.i_wen
+  io.o_wbu_wen := io.wbu_vset.vtype_wen || io.i_wen
   io.o_wbu_csr_wen := io.i_csr_wen
   io.o_rd_addr := io.i_rd_addr
   io.o_csr_addr := io.i_csr_addr
