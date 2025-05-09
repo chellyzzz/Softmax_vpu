@@ -28,8 +28,7 @@ class RegisterFile extends Module {
     val wen = Input(Bool())
   })
 
-  //TODO: semantic: mem
-  val regfile = Reg(Vec (32, UInt (DataWidth.W)))
+  val regfile = Reg(Vec(32, UInt(DataWidth.W)))
   // Default values for registers (reset behavior can be added if needed)
   regfile(0) := 0.U
 

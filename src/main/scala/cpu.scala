@@ -6,9 +6,7 @@ import cpu._
 import cpu.vector._
 import Parameter._
  
-class CpuCore (
-  val vector: Boolean = true,
-)extends Module {
+class CpuCore extends Module {
   val io = IO(new Bundle {
     // AXI4 Master Interface
     val io_master = new axi_master
@@ -100,6 +98,8 @@ class CpuCore (
   val  ifu2idu_pc           = Wire(UInt(DataWidth.W)) 
 
   val regfile = Module(new RegisterFile)
+  val vectorregfile = Module(new VectorRegisterFile)
+
   regfile.io.waddr := wbu_rd_addr
   regfile.io.wdata := wbu_rd_wdata
   regfile.io.wen := wbu_wen
@@ -130,7 +130,7 @@ class CpuCore (
 
 
   val xbar    = Module(new Xbar)
-  val ifu = Module(new IFU)
+  val ifu     = Module(new IFU)
   val ifu2idu_regs = withReset( reset.asBool | pc_update_en | idu2exu_fence_i){
     Module(new IFU2IDURegs)
   }
@@ -249,6 +249,15 @@ class CpuCore (
   idu2exu_fence_i       := idu2exu_regs.io.out.fence_i       
   idu2exu_csr_addr      := idu2exu_regs.io.out.csr_addr      
 
+
+  val vectordecoder = Module(new VecDecoder)
+  vectordecoder.io.in := idu2exu_regs.io.out_vec
+
+  vectorregfile.io.raddr1 := vectordecoder.io.ctrl.addr_vs1
+  vectorregfile.io.raddr2 := vectordecoder.io.ctrl.addr_vs2
+  vectordecoder.io.rdata1 := vectorregfile.io.rdata1
+  vectordecoder.io.rdata2 := vectorregfile.io.rdata2
+
   val exu_pc_next = Wire(UInt(32.W))
   val exu = Module(new EXU)
   exu.io.idu_vset := idu2exu_regs.io.out_vset
@@ -278,6 +287,11 @@ class CpuCore (
   exu.io.i_post_ready     := wbu2exu_ready
   exu2wbu_valid   := exu.io.o_post_valid  
   exu2idu_ready   := exu.io.o_pre_ready   
+
+
+  val vectorexu = Module(new VectorExecution)
+  vectorexu.io.in := vectordecoder.io.out
+  xbar.io.vlsu <> vectorexu.io.vlsu
 
   val exu_wbu_regs = withReset(reset.asBool | pc_update_en.asBool) {
     Module(new EXU_WBU_Regs)
@@ -333,15 +347,13 @@ class CpuCore (
   wbu.io.i_res := exu2wbu_res
   wbu.io.wbu_vset := exu_wbu_regs.io.wbu_vset
 
+  val vectorwbu = Module(new VectorWBU)
+  vectorwbu.io.in := vectorexu.io.out
+  vectorregfile.io.wdata := vectorwbu.io.out.vd
+  vectorregfile.io.waddr := vectorwbu.io.out.vuop.addr_vd
+  vectorregfile.io.wen   := vectorwbu.io.out.vuop.wen
 
   Csrs.io.vtype_wen := exu_wbu_regs.io.wbu_vset.vtype_wen
-  
-  
-  if(Parameter.debug){
-    io.diff := wbu.io.diff
-    wbu.io.next := exu_wbu_regs.io.next
-
-  }
 
   pc_next           :=   wbu.io.o_pc_next     
   pc_update_en      :=   wbu.io.o_pc_update           
@@ -355,4 +367,12 @@ class CpuCore (
 
   // xbar
   xbar.io.sram <> io.io_master
+
+
+  if(Parameter.debug){
+    io.diff := wbu.io.diff
+    wbu.io.next := exu_wbu_regs.io.next
+
+  }
+
 }

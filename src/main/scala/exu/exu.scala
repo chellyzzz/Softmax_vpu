@@ -38,7 +38,7 @@ class EXU extends Module {
     val o_pc_next   = Output(UInt(DataWidth.W))
 
     // AXI channels
-    val lsu = new axi_master
+    val lsu          = new axi_master
 
     val i_post_ready = Input(Bool())
     val i_pre_valid  = Input(Bool())

@@ -67,3 +67,12 @@ object VLSU_MOP {
   def indexed_ordered   = "b11".U(2.W)   
 }
 
+object VALU_OP {
+  def width = 4
+  def VADD  = "b000".U(width.W)
+  def VFMAD = "b000".U(width.W)
+  def VFDIV = "b001".U(width.W)
+  def VFCVT = "b010".U(width.W)
+  def VFADD = "b011".U(width.W)
+  def apply() = UInt(width.W)
+}

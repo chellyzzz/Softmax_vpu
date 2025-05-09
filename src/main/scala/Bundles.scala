@@ -79,10 +79,12 @@ class VDecInput extends Bundle {
     val addr_vs1     = UInt(5.W)
     val addr_vs2     = UInt(5.W)
     val addr_vd      = UInt(5.W)
-    val func3        = UInt(3.W)
     val rs1          = UInt(32.W)
     val rs2          = UInt(32.W)
+
+    
     val imm          = UInt(7.W)
+    val func3        = UInt(3.W)
     val vtype        = UInt(32.W)
 }
 
