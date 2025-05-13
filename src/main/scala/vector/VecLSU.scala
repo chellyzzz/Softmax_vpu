@@ -7,130 +7,132 @@ import cpu._
 
 class VectorLSU extends Module {
   val io = IO(new Bundle {
-    val storeSrc    = Input(UInt(VLEN.W))
-    val loadRes     = Output(UInt(VLEN.W))
+    val storeSrc      = Input(UInt(VLEN.W))
+    val loadRes       = Output(UInt(VLEN.W))
 
-    val aluRes      = Input(UInt(32.W))
-    val exuOpt      = Input(UInt(3.W))
-
-    val i_load        = Input(Bool())
-    val i_store       = Input(Bool())
+    val base_addr     = Input(UInt(32.W))
+    val in            = Flipped(Decoupled(new Vuop))
+    val out           = Decoupled(new Vuop)
 
     // AXI interface
-    val M_axi = new axi_master
-
-    val oPreReady     = Input(Bool())
-    val iPreValid     = Input(Bool())
+    val axi_master    = new axi_master
   })
 
-  // Parameters for operation
-  val LB  = "b000".U
-  val LH  = "b001".U
-  val LW  = "b010".U
-  val LBU = "b100".U
-  val LHU = "b101".U
-
-  val SB = "b000".U
-  val SH = "b001".U
-  val SW = "b010".U
-
+  val busy = RegInit(false.B)
+  val vuop = io.in.bits
+  io.out.bits := RegNext(vuop)
 
   // AXI signals
   val axi_awvalid = RegInit(false.B)
-  val axi_wvalid = RegInit(false.B)
+  val axi_wvalid  = RegInit(false.B)
   val axi_arvalid = RegInit(false.B)
-  val axi_rready = RegInit(false.B)
-  val axi_bready = RegInit(false.B)
-  val axi_axaddr = RegInit(0.U(DataWidth.W))
+  val axi_rready  = RegInit(false.B)
+  val axi_bready  = RegInit(false.B)
+  val axi_axaddr  = RegInit(0.U(32.W))
 
-  io.M_axi.AXI_AWADDR := axi_axaddr
-  io.M_axi.AXI_WDATA := io.storeSrc
-  io.M_axi.AXI_AWVALID := axi_awvalid
-  io.M_axi.AXI_AWLEN := 0.U
-  io.M_axi.AXI_AWSIZE := MuxLookup(io.exuOpt, "b010".U, Seq(
-    SW -> "b010".U,
-    SH -> "b001".U,
-    SB -> "b000".U
+  val axi_axsize = MuxLookup(vuop.sew, "b010".U, Seq(
+    ELEMENT_WIDTH.width8  -> "b000".U,
+    ELEMENT_WIDTH.width16 -> "b001".U,
+    ELEMENT_WIDTH.width32 -> "b010".U,
+    ELEMENT_WIDTH.width64 -> "b011".U   // not supported
   ))
-  io.M_axi.AXI_AWID := 0.U
-  io.M_axi.AXI_AWBURST := "b00".U
 
-  io.M_axi.AXI_WVALID := axi_wvalid
-  io.M_axi.AXI_WSTRB := MuxLookup(io.exuOpt, 0.U, Seq(
-    SB -> "b0001".U,
-    SH -> "b0011".U,
-    SW -> "b1111".U
-  ))
-  io.M_axi.AXI_WLAST := true.B
-  io.M_axi.AXI_BREADY := axi_bready
+  io.axi_master.AXI_AWADDR  := axi_axaddr
+  io.axi_master.AXI_WDATA   := io.storeSrc
+  io.axi_master.AXI_AWVALID := axi_awvalid
+  io.axi_master.AXI_AWLEN   := 0.U
+  io.axi_master.AXI_AWSIZE  := axi_axsize
+  io.axi_master.AXI_AWID := 0.U
+  io.axi_master.AXI_AWBURST := "b00".U
 
-  io.M_axi.AXI_ARADDR := axi_axaddr
-  io.M_axi.AXI_ARVALID := axi_arvalid
-  io.M_axi.AXI_ARLEN := 0.U
-  io.M_axi.AXI_ARSIZE := MuxLookup(io.exuOpt(1, 0), "b010".U, Seq(
-    "b10".U -> "b010".U,
-    "b01".U -> "b001".U,
-    "b00".U -> "b000".U
-  ))
-  io.M_axi.AXI_ARBURST := "b00".U
-  io.M_axi.AXI_ARID := 0.U
-  io.M_axi.AXI_RREADY := axi_rready
+  io.axi_master.AXI_WVALID := axi_wvalid
+  io.axi_master.AXI_WSTRB := "b0000".U
 
-  // Transaction control
+  io.axi_master.AXI_WLAST   := true.B
+  io.axi_master.AXI_BREADY  := axi_bready
+
+  io.axi_master.AXI_ARADDR  := axi_axaddr
+  io.axi_master.AXI_ARVALID := axi_arvalid
+  io.axi_master.AXI_ARLEN   := "b11".U(8.W)
+  dontTouch(io.axi_master.AXI_ARLEN)
+  io.axi_master.AXI_ARSIZE  := axi_axsize
+  io.axi_master.AXI_ARBURST := "b01".U
+  io.axi_master.AXI_ARID    := 0.U
+  io.axi_master.AXI_RREADY  := axi_rready
   
-  val init_txn_ff2   = RegInit(false.B)
-  val init_txn_ff    = RegInit(false.B)
-
-  val o_pre_ready_d1 = RegInit(false.B)
-  o_pre_ready_d1 := io.oPreReady
+  val txn_pulse_load   = RegNext(vuop.vload && io.in.fire())
+  val txn_pulse_store  = RegNext(vuop.vstore&& io.in.fire())
   
-  val is_ls = io.i_load  || io.i_store
-  val init_txn_pulse = Mux(reset.asBool, 0.U, (!init_txn_ff2) & init_txn_ff)
-  val INIT_AXI_TXN   = Mux(reset.asBool, 0.U, Mux(o_pre_ready_d1 & is_ls , 1.U , 0.U))
-  val txn_pulse_load   = io.i_load  & init_txn_pulse
-  val txn_pulse_store  = io.i_store & init_txn_pulse  
+  // index control
+  val read_index     = RegInit(0.U(4.W))
+  val axi_rdata_e32  = Reg(Vec((VLEN/32), UInt(32.W)))
+  val axi_rdata_e16  = Reg(Vec((VLEN/16), UInt(16.W)))
+  val axi_rdata_e8   = Reg(Vec((VLEN/8), UInt(8.W)))
+  val reading        = RegInit(false.B)
 
-  init_txn_ff := INIT_AXI_TXN
-  init_txn_ff2 := init_txn_ff
-  axi_axaddr := io.aluRes
-  
-  when(txn_pulse_store.asBool) {
+  when(txn_pulse_store && !busy) {
     axi_awvalid := true.B
-  }.elsewhen(io.M_axi.AXI_AWREADY && axi_awvalid) {
+    axi_axaddr := io.base_addr
+  }.elsewhen(io.axi_master.AXI_AWREADY && axi_awvalid) {
     axi_awvalid := false.B
   }
 
-  when(txn_pulse_store.asBool) {
+  when(txn_pulse_store && !busy) {
     axi_wvalid := true.B
-  }.elsewhen(io.M_axi.AXI_WREADY && axi_wvalid) {
+  }.elsewhen(io.axi_master.AXI_WREADY && axi_wvalid) {
     axi_wvalid := false.B
   }
 
-  when(io.M_axi.AXI_BVALID && !axi_bready) {
+  when(io.axi_master.AXI_BVALID && !axi_bready) {
     axi_bready := true.B
   }.elsewhen(axi_bready) {
     axi_bready := false.B
   }
 
-  when(txn_pulse_load.asBool) {
+  when(txn_pulse_load && !busy) {
     axi_arvalid := true.B
-  }.elsewhen(axi_arvalid && io.M_axi.AXI_ARREADY) {
+    axi_axaddr := io.base_addr
+  }.elsewhen(axi_arvalid && io.axi_master.AXI_ARREADY) {
     axi_arvalid := false.B
+    reading := true.B
   }
 
-  when(io.M_axi.AXI_RVALID && !axi_rready) {
+  when(io.axi_master.AXI_RVALID && !axi_rready) {
     axi_rready := true.B
-  }.elsewhen(axi_rready) {
+  }.elsewhen(io.axi_master.AXI_RVALID && axi_rready) {
     axi_rready := false.B
+    when(vuop.sew === ELEMENT_WIDTH.width32){
+      axi_rdata_e32(read_index) := io.axi_master.AXI_RDATA(31, 0)
+      read_index := read_index + 1.U
+    }.elsewhen(vuop.sew === ELEMENT_WIDTH.width16){
+      axi_rdata_e16(read_index) := io.axi_master.AXI_RDATA(15, 0)
+      read_index := read_index + 1.U
+    }.elsewhen(vuop.sew === ELEMENT_WIDTH.width8){
+      axi_rdata_e8(read_index) := io.axi_master.AXI_RDATA(7, 0)
+      read_index := read_index + 1.U
+    }
+  }
+  
+  io.loadRes := MuxLookup(vuop.sew, 0.U, Seq(
+    ELEMENT_WIDTH.width32 -> axi_rdata_e32.asTypeOf(io.loadRes),
+    ELEMENT_WIDTH.width16 -> axi_rdata_e16.asTypeOf(io.loadRes),
+    ELEMENT_WIDTH.width8  -> axi_rdata_e8.asTypeOf(io.loadRes)
+  ))
+
+  val ready = RegInit(true.B)
+  io.in.ready := ready
+  when(io.in.fire()){
+    ready := false.B
+  }.elsewhen(io.axi_master.AXI_RLAST){
+    ready := true.B
   }
 
-  val axi_rdata = io.M_axi.AXI_RDATA
-  io.loadRes := MuxLookup(io.exuOpt, 0.U, Seq(
-    LB -> Cat(Fill(24, axi_rdata(7)), axi_rdata(7, 0)),
-    LH -> Cat(Fill(16, axi_rdata(15)), axi_rdata(15, 0)),
-    LW -> axi_rdata,
-    LBU -> Cat(0.U(24.W), axi_rdata(7, 0)),
-    LHU -> Cat(0.U(16.W), axi_rdata(15, 0))
-  ))
+  when(txn_pulse_load || txn_pulse_store){
+    busy := true.B
+  }.elsewhen(io.axi_master.AXI_RLAST){
+    busy := false.B
+  }
+
+  io.out.valid := io.axi_master.AXI_RLAST
 }
 

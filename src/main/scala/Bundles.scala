@@ -70,6 +70,7 @@ class axi_slave extends Bundle{
 
 
 class VDecInput extends Bundle {
+    val pc           = UInt(4.W) // only 4 bits are used for branch prediction or flush 
     val vec_arith    = Bool()
     val vec_load     = Bool()
     val vec_store    = Bool()
@@ -82,7 +83,6 @@ class VDecInput extends Bundle {
     val rs1          = UInt(32.W)
     val rs2          = UInt(32.W)
 
-    
     val imm          = UInt(7.W)
     val func3        = UInt(3.W)
     val vtype        = UInt(32.W)

@@ -36,6 +36,7 @@ class IDU extends Module {
     val vec_set_vtype_sel_zimm= Output(Bool())
     val vec_set_avl_sel_uimm  = Output(Bool())
 
+    val vtype_ren   = Output(Bool())
     val vec_imm     = Output(UInt(7.W))
     val vec_arith   = Output(Bool())
     val vec_load    = Output(Bool())
@@ -224,4 +225,5 @@ class IDU extends Module {
   io.vec_set_uimm           := io.ins(19,15)
   io.vec_set_vtype_sel_zimm := Mux(io.ins(30,25).orR, true.B, false.B)
   io.vec_set_avl_sel_uimm   := Mux(io.ins(31,29).andR, true.B, false.B)
+  io.vtype_ren              := io.vec_arith || io.vec_load || io.vec_store
 }

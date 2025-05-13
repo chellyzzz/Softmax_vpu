@@ -57,9 +57,9 @@ void reg_update(){
   // cpu.csr.mtvec = top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__Csrs__DOT__mtvec;
   if(top->rootp->top__DOT__cpu__DOT__wbu__DOT__o_pc_next != 0){
     cpu.pc = top->rootp->top__DOT__cpu__DOT__wbu__DOT__o_pc_next;
-    if(cpu.pc == 0x80000068){
-      if_stop = true;
-    }
+    // if(cpu.pc == 0x80000074){
+    //   if_stop = true;
+    // }
   }
   #ifdef PC_WAVE_START
   if(cpu.pc == PC_WAVE_START){
@@ -104,7 +104,9 @@ bool if_end(){
 }
 
 void cpu_exec(uint64_t n){
-    for(; n > 0; n--){
+  uint64_t max = 20000;
+  // max = n;
+    for(; max > 0; max--){
       if(if_end() | contextp->gotFinish() | if_stop){
         printf("Program execution has ended. To restart the program, exit NPC and run again.\n");
         printf("npc: %s at pc = %lx\n", (hit_goodtrap() & if_end() ? "HIT GOOD TRAP" : "HIT BAD TRAP"), cpu.pc);

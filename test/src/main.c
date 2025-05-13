@@ -29,13 +29,13 @@ int32_t y[10] = {0,9,8,7,6,5,4,3,2,1};
 int32_t z[10];
 
 void vec_add_rvv(int32_t* dst, const int32_t* lhs, const int32_t* rhs, size_t avl) {
-    vint32m2_t vlhs, vrhs, vres;
-    for (size_t vl; (vl = __riscv_vsetvl_e32m2(avl));
+    vint32m1_t vlhs, vrhs, vres;
+    for (size_t vl; (vl = __riscv_vsetvl_e32m1(avl));
          avl -= vl, lhs += vl, rhs += vl, dst += vl) {
-        vlhs = __riscv_vle32_v_i32m2(lhs, vl);
-        vrhs = __riscv_vle32_v_i32m2(rhs, vl);
-        vres = __riscv_vadd_vv_i32m2(vlhs, vrhs, vl);
-        __riscv_vse32_v_i32m2(dst, vres, vl);
+        vlhs = __riscv_vle32_v_i32m1(lhs, vl);
+        vrhs = __riscv_vle32_v_i32m1(rhs, vl);
+        vres = __riscv_vadd_vv_i32m1(vlhs, vrhs, vl);
+        __riscv_vse32_v_i32m1(dst, vres, vl);
     }
 }
 

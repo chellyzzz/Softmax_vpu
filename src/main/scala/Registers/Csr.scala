@@ -20,6 +20,9 @@ class CSR extends Module {
 
     val o_mepc = Output(UInt(32.W))
     val o_mtvec = Output(UInt(32.W))
+
+    val vtype_ren = Input(Bool())
+    val vtype     = Output(UInt(32.W))
   })
 
   val mvendorid = 0x79737978.U(32.W)
@@ -83,7 +86,7 @@ class CSR extends Module {
   io.o_mepc := Mux(io.i_mret, mepc, 0.U)
   io.o_mtvec := Mux(io.i_ecall, mtvec, 0.U)
 
-
+  io.vtype := Mux(io.vtype_ren, vtype, 0.U)
 }
 
 class VecCSR extends Module {

@@ -7,10 +7,11 @@ import cpu._
 
 
 class Vuop extends Bundle{
-  val sew       = UInt(2.W)
+  val sew       = UInt(3.W)
   val wen       = Bool()
-  val vm        = Bool()
-  val rm        = UInt(2.W)
+  val vma       = Bool()
+  val vta       = UInt(2.W)
+  val lmul      = UInt(3.W)
   val opcode    = VALU_OP()
   val vload     = Bool()
   val vstore    = Bool()
@@ -26,7 +27,8 @@ class VControl extends Bundle {
 class VDecOutput extends Bundle{
   val vs1   = UInt(VLEN.W)
   val vs2   = UInt(VLEN.W)
-  val vuop   = new Vuop
+  val vs3   = UInt(VLEN.W)
+  val vuop  = new Vuop
 }
 
 class VExuOutput extends Bundle {

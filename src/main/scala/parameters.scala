@@ -76,3 +76,10 @@ object VALU_OP {
   def VFADD = "b011".U(width.W)
   def apply() = UInt(width.W)
 }
+
+object ELEMENT_WIDTH {
+  def width8  =  "b000".U  // VLxE8 /VSxE8
+  def width16 =  "b101".U  // VLxE16/VSxE16
+  def width32 =  "b110".U  // VLxE32/VSxE32
+  def width64 =  "b111".U  // VLxE64/VSxE64
+}

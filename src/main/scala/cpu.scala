@@ -10,9 +10,9 @@ class CpuCore extends Module {
   val io = IO(new Bundle {
     // AXI4 Master Interface
     val io_master = new axi_master
-    val flush  = Output(Bool())
-    val ebreak = Output(Bool())
-    val diff = if (debug) Output(Bool()) else Output(UInt(0.W))
+    val flush     = Output(Bool())
+    val ebreak    = Output(Bool())
+    val diff      = if (debug) Output(Bool()) else Output(UInt(0.W))
   })
   
   // Define various signal types
@@ -53,7 +53,6 @@ class CpuCore extends Module {
   val ifu2idu_valid = Wire(Bool())
   val idu2ifu_ready = Wire(Bool())
   val idu2exu_valid = Wire(Bool())
-  val exu2idu_ready = Wire(Bool())
   val exu2wbu_valid = Wire(Bool())
   val wbu2exu_ready = Wire(Bool())
   val fence_i       = Wire(Bool())
@@ -97,9 +96,24 @@ class CpuCore extends Module {
   
   val  ifu2idu_pc           = Wire(UInt(DataWidth.W)) 
 
+  // MODULES
   val regfile = Module(new RegisterFile)
+  val Csrs = Module(new CSR)
   val vectorregfile = Module(new VectorRegisterFile)
+  val xbar    = Module(new Xbar)
+  val ifu     = Module(new IFU)
+  val ifu2idu_regs = withReset( reset.asBool | pc_update_en | idu2exu_fence_i){
+    Module(new IFU2IDURegs)
+  }
+  val idu = Module(new IDU)
+  val idu2exu_regs = withReset(reset.asBool | pc_update_en | idu2exu_fence_i){
+    Module(new IDU_EXU_Regs)
+  }
+  val vectordecoder = Module(new VecDecoder)
+  val exu = Module(new EXU)
+  val vectorexu = Module(new VectorExecution)
 
+  // regfile
   regfile.io.waddr := wbu_rd_addr
   regfile.io.wdata := wbu_rd_wdata
   regfile.io.wen := wbu_wen
@@ -115,8 +129,7 @@ class CpuCore extends Module {
   regfile.io.idu_waddr := idu_addr_rd
 
   //output of the register file
-
-  val Csrs = Module(new CSR)
+  // csrs
   Csrs.io.i_csr_wen := wbu_csr_wen
   Csrs.io.i_ecall := ecall
   Csrs.io.i_mret := mret
@@ -127,16 +140,10 @@ class CpuCore extends Module {
   csr_rs2 :=  Csrs.io.o_csr_rdata
   mepc  := Csrs.io.o_mepc 
   mtvec := Csrs.io.o_mtvec
+  Csrs.io.vtype_ren := idu.io.vtype_ren
 
-
-  val xbar    = Module(new Xbar)
-  val ifu     = Module(new IFU)
-  val ifu2idu_regs = withReset( reset.asBool | pc_update_en | idu2exu_fence_i){
-    Module(new IFU2IDURegs)
-  }
-
+  // ifu
   ifu.io.ifu <> xbar.io.ifu
-  
   ifu.io.i_pc_next    := pc_next
   ifu.io.flush        := pc_update_en
   ifu.io.i_post_ready := idu2ifu_ready
@@ -149,7 +156,6 @@ class CpuCore extends Module {
   ifu2idu_regs.io.i_post_ready  := idu2ifu_ready
   ifu2idu_valid                 := ifu2idu_regs.io.o_post_valid
   
-  val idu = Module(new IDU)
   idu.io.ins   :=  ifu2idu_regs.io.o_ins  
   imm           :=  idu.io.o_imm      
   idu_addr_rd   :=  idu.io.o_rd       
@@ -172,13 +178,10 @@ class CpuCore extends Module {
   ebreak        :=  idu.io.o_ebreak   
   fence_i       :=  idu.io.o_fence_i  
 
-  val idu2exu_regs = withReset(reset.asBool | pc_update_en | idu2exu_fence_i){
-    Module(new IDU_EXU_Regs)
-  }
 
 
-  idu2exu_regs.io.i_pre_valid := ifu2idu_valid
-  idu2exu_regs.io.i_post_ready := exu2idu_ready
+  idu2exu_regs.io.i_pre_valid   := ifu2idu_valid
+  idu2exu_regs.io.i_post_ready  := exu.io.o_pre_ready  && vectordecoder.io.in.ready
 
   idu2ifu_ready:=  idu2exu_regs.io.pre_ready   
   idu2exu_valid:=  idu2exu_regs.io.post_valid  
@@ -198,7 +201,8 @@ class CpuCore extends Module {
   idu2exu_regs.io.vec_imm     := idu.io.vec_imm    
   idu2exu_regs.io.vec_arith   := idu.io.vec_arith 
   idu2exu_regs.io.vec_load    := idu.io.vec_load     
-  idu2exu_regs.io.vec_store   := idu.io.vec_store   
+  idu2exu_regs.io.vec_store   := idu.io.vec_store 
+  idu2exu_regs.io.vtype       := Csrs.io.vtype  
   //
 
   idu2exu_regs.io.i_pc := ifu2idu_pc
@@ -250,8 +254,10 @@ class CpuCore extends Module {
   idu2exu_csr_addr      := idu2exu_regs.io.out.csr_addr      
 
 
-  val vectordecoder = Module(new VecDecoder)
-  vectordecoder.io.in := idu2exu_regs.io.out_vec
+  // vector decoder
+  vectordecoder.io.flush := false.B
+  vectordecoder.io.in.bits := idu2exu_regs.io.out_vec
+  vectordecoder.io.in.valid := idu2exu_regs.io.vec_post_valid
 
   vectorregfile.io.raddr1 := vectordecoder.io.ctrl.addr_vs1
   vectorregfile.io.raddr2 := vectordecoder.io.ctrl.addr_vs2
@@ -259,7 +265,6 @@ class CpuCore extends Module {
   vectordecoder.io.rdata2 := vectorregfile.io.rdata2
 
   val exu_pc_next = Wire(UInt(32.W))
-  val exu = Module(new EXU)
   exu.io.idu_vset := idu2exu_regs.io.out_vset
   
   exu.io.i_src1 := idu2exu_src1
@@ -286,11 +291,10 @@ class CpuCore extends Module {
   exu.io.i_pre_valid      := idu2exu_valid
   exu.io.i_post_ready     := wbu2exu_ready
   exu2wbu_valid   := exu.io.o_post_valid  
-  exu2idu_ready   := exu.io.o_pre_ready   
 
 
-  val vectorexu = Module(new VectorExecution)
-  vectorexu.io.in := vectordecoder.io.out
+  // vector exu  
+  vectorexu.io.in <> vectordecoder.io.out
   xbar.io.vlsu <> vectorexu.io.vlsu
 
   val exu_wbu_regs = withReset(reset.asBool | pc_update_en.asBool) {
@@ -347,11 +351,13 @@ class CpuCore extends Module {
   wbu.io.i_res := exu2wbu_res
   wbu.io.wbu_vset := exu_wbu_regs.io.wbu_vset
 
+  // vector wbu
   val vectorwbu = Module(new VectorWBU)
-  vectorwbu.io.in := vectorexu.io.out
-  vectorregfile.io.wdata := vectorwbu.io.out.vd
-  vectorregfile.io.waddr := vectorwbu.io.out.vuop.addr_vd
-  vectorregfile.io.wen   := vectorwbu.io.out.vuop.wen
+  vectorwbu.io.in        <> vectorexu.io.out
+  vectorwbu.io.out.ready := true.B
+  vectorregfile.io.wdata := vectorwbu.io.out.bits.vd
+  vectorregfile.io.waddr := vectorwbu.io.out.bits.vuop.addr_vd
+  vectorregfile.io.wen   := vectorwbu.io.out.bits.vuop.wen
 
   Csrs.io.vtype_wen := exu_wbu_regs.io.wbu_vset.vtype_wen
 

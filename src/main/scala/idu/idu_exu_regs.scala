@@ -48,6 +48,7 @@ class IDU_EXU_Regs extends Module {
     val vec_arith               = Input(Bool())
     val vec_load                = Input(Bool())
     val vec_store               = Input(Bool())
+    val vtype                   = Input(UInt(32.W))
     val out_vset                = Output(new IDU_VSET)
     val out_vec                 = Output(new VDecInput)
 
@@ -56,8 +57,9 @@ class IDU_EXU_Regs extends Module {
     // control signals
     val i_pre_valid    = Input(Bool())
     val i_post_ready   = Input(Bool())
-    val pre_ready     = Output(Bool())
-    val post_valid    = Output(Bool())
+    val pre_ready      = Output(Bool())
+    val post_valid     = Output(Bool())
+    val vec_post_valid = Output(Bool())
 
     // scalar
     val i_pc           = Input(UInt(32.W))
@@ -87,7 +89,7 @@ class IDU_EXU_Regs extends Module {
     val i_jalr         = Input(Bool())
     val i_fence_i      = Input(Bool())
     val i_ebreak       = Input(Bool())
-    val out                     = Output(new IDU_EXU_OUT)
+    val out            = Output(new IDU_EXU_OUT)
 
   })
 
@@ -163,7 +165,9 @@ class IDU_EXU_Regs extends Module {
     vec_reg.rs1                 := io.src1       
     vec_reg.rs2                 := io.src2       
     vec_reg.imm                 := io.vec_imm
-    vec_reg.func3               := io.i_exu_opt      
+    vec_reg.func3               := io.i_exu_opt
+    vec_reg.vtype               := io.vtype      
+    vec_reg.pc                  := io.i_pc(3, 0)
   }.elsewhen(io.i_post_ready && !io.post_valid) {
     vtype_control_reg := 0.U.asTypeOf(new IDU_VSET)
     vec_reg := 0.U.asTypeOf(new VDecInput)
@@ -171,6 +175,6 @@ class IDU_EXU_Regs extends Module {
 
   io.out_vset := vtype_control_reg
   io.out_vec  := vec_reg
+  io.vec_post_valid := RegNext(io.vec_arith || io.vec_load || io.vec_store)
 
-  dontTouch(io.out_vec)
 }

@@ -21,7 +21,7 @@ $(TARGET): $(SRC) $(wildcard $(INCLUDE_DIR)/*.h)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(TARGET)
 
 compile: $(TARGET)
-	riscv64-unknown-elf-objdump -d $(TARGET) > $(TARGET).txt
+	riscv64-unknown-elf-objdump -D $(TARGET) > $(TARGET).txt
 	riscv64-unknown-elf-objcopy -O binary $(BUILD_DIR)/$(TOP) $(BUILD_DIR)/$(TOP).bin
 
 clean:
