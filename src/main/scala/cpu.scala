@@ -192,9 +192,6 @@ class CpuCore extends Module {
   idu2exu_regs.io.vec_set_uimm := idu.io.vec_set_uimm
   idu2exu_regs.io.vec_set_vtype_sel_zimm := idu.io.vec_set_vtype_sel_zimm
   idu2exu_regs.io.vec_set_avl_sel_uimm   := idu.io.vec_set_avl_sel_uimm  
-  idu2exu_regs.io.is_vs1_vec  := idu.io.is_vs1_vec   
-  idu2exu_regs.io.is_vs2_vec  := idu.io.is_vs2_vec   
-  idu2exu_regs.io.is_vd_vec   := idu.io.is_vd_vec
   idu2exu_regs.io.addr_vs1    := idu.io.addr_vs1 
   idu2exu_regs.io.addr_vs2    := idu.io.addr_vs2 
   idu2exu_regs.io.addr_vd     := idu.io.addr_vd  

@@ -41,9 +41,6 @@ class IDU extends Module {
     val vec_arith   = Output(Bool())
     val vec_load    = Output(Bool())
     val vec_store   = Output(Bool())
-    val is_vs1_vec  = Output(Bool())
-    val is_vs2_vec  = Output(Bool())
-    val is_vd_vec   = Output(Bool())
     val addr_vs1    = Output(UInt(5.W))
     val addr_vs2    = Output(UInt(5.W))
     val addr_vd     = Output(UInt(5.W))
@@ -206,9 +203,7 @@ class IDU extends Module {
   io.addr_vd    := io.ins(11,7)
 
   val mop = io.ins(27,26)
-  io.is_vs1_vec    := ~(VLOAD || VSTORE)
-  io.is_vs2_vec    := (VLOAD || VSTORE) && (mop === VLSU_MOP.unit_stride || mop === VLSU_MOP.indexed_unordered)
-  io.is_vd_vec     := VLOAD || VSTORE
+
   
   // if (debug) {
   //   val lumop = io.ins(24, 20)

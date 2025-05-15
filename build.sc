@@ -6,6 +6,7 @@ import mill.scalalib.TestModule.ScalaTest
 import scalalib._
 // support BSP
 import mill.bsp._
+import mill._, scalalib._
 
 object ivys{
   val sv = "2.13.13"
@@ -16,7 +17,7 @@ object ivys{
   val scalatest = ivy"org.scalatest::scalatest:3.2.2"
 }
 
-object top extends ScalaModule  {
+object top extends ScalaModule {
   def chiselOpt: Option[PublishModule] = None
 
   override def millSourcePath = os.pwd
@@ -25,8 +26,17 @@ object top extends ScalaModule  {
 
   override def scalacOptions = Seq("-Xsource:2.13")
 
-  override def ivyDeps = (if(chiselOpt.isEmpty) Agg(ivys.chisel3) else Agg.empty[Dep]) ++ Agg(ivys.chiselCirct)
+  override def ivyDeps = Agg(
+    ivys.chisel3,
+    ivys.chiselCirct,
+    ivys.chiseltest,
+    ivys.scalatest
+  )
 
   override def scalacPluginIvyDeps = Agg(ivys.chisel3Plugin)
+
+  // 若有 main 函数，指定为 runMain 的入口
+  def mainClass = Some("top.topMain")
+
 
 }

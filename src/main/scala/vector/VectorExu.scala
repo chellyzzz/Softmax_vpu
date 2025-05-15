@@ -11,7 +11,7 @@ class VectorExecution extends Module {
     val out   = Decoupled(new VExuOutput)
     val vlsu  = new axi_master
   })
-    
+
   val in = io.in.bits
   // output types
   // val vfa_out     = Reg(new VExuOutput)
@@ -27,8 +27,8 @@ class VectorExecution extends Module {
   valu.io.vs2 := in.vs2
   valu.io.sew := in.vuop.sew
   valu.io.op  := in.vuop.opcode
-  valu_out.vd   := valu.io.vd
-  valu_out.vuop := in.vuop
+  valu_out.vd   := RegEnable(valu.io.vd, io.in.fire())
+  valu_out.vuop := RegEnable(in.vuop, io.in.fire())
 
 
   val addr = in.vs1(31,0) + in.vs2(31,0)
@@ -54,7 +54,7 @@ class VectorExecution extends Module {
       Seq(
           in.vuop.vload   -> vlsu.io.out.valid,
           in.vuop.vstore  -> vlsu.io.out.valid,
-          in.vuop.varith  -> io.in.valid
+          in.vuop.varith  -> RegNext(io.in.fire()),
       )
   )
 
@@ -69,12 +69,12 @@ class VAlu extends Module {
         val vs2 = Input(UInt(VLEN.W))
         val sew = Input(UInt(2.W))
         val op  = Input(VALU_OP())
-        val vd = Output(UInt(VLEN.W))
+        val vd  = Output(UInt(VLEN.W))
     })
 
     // Implement the vector ALU operations here
     val result_e32 = Wire(Vec((VLEN/32), UInt(32.W)))
-
+    
     for(i <- 0 until (VLEN/32)) {
         result_e32(i) := io.vs1(i*32+31, i*32) + io.vs2(i*32+31, i*32)
     }

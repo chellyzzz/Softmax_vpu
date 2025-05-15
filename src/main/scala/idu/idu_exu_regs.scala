@@ -38,9 +38,7 @@ class IDU_EXU_Regs extends Module {
     val vec_set_uimm            = Input(UInt(5.W))
     val vec_set_vtype_sel_zimm  = Input(Bool())
     val vec_set_avl_sel_uimm    = Input(Bool())
-    val is_vs1_vec              = Input(Bool())
-    val is_vs2_vec              = Input(Bool())
-    val is_vd_vec               = Input(Bool())
+
     val addr_vs1                = Input(UInt(5.W))
     val addr_vs2                = Input(UInt(5.W))
     val addr_vd                 = Input(UInt(5.W))
@@ -156,9 +154,6 @@ class IDU_EXU_Regs extends Module {
     vec_reg.vec_arith           := io.vec_arith 
     vec_reg.vec_load            := io.vec_load  
     vec_reg.vec_store           := io.vec_store 
-    vec_reg.is_vs1_vec          := io.is_vs1_vec
-    vec_reg.is_vs2_vec          := io.is_vs2_vec
-    vec_reg.is_vd_vec           := io.is_vd_vec 
     vec_reg.addr_vs1            := io.addr_vs1  
     vec_reg.addr_vs2            := io.addr_vs2  
     vec_reg.addr_vd             := io.addr_vd   

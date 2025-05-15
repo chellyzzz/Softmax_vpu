@@ -52,8 +52,38 @@ class VecDecoder extends Module {
   io.ctrl.addr_vs2 := in.addr_vs2
 
   val vtype   = in.vtype
-  val func3  = in.func3
-  val func7  = in.imm
+  val func3   = in.func3
+  val func7   = in.imm 
+  val funct3  = func3
+  val mop     = func7(2, 1)
+  val ivv = (funct3 === "b000".U)
+  val ivx = (funct3 === "b100".U)
+  val ivi = (funct3 === "b011".U)
+  val mvv = (funct3 === "b010".U)
+  val mvx = (funct3 === "b110".U)
+  val fvv = (funct3 === "b001".U)
+  val fvf = (funct3 === "b101".U)
+
+  val is_load   = in.vec_load
+  val is_store  = in.vec_store
+  val is_varith = in.vec_arith
+
+  val is_vs1_vec  = Mux1H(
+    Seq(
+      is_load -> false.B,
+      is_store-> false.B,
+      is_varith -> ivv,
+    )
+  ) 
+  val is_vs2_vec  = Mux1H(
+    Seq(
+      is_load -> (mop === VLSU_MOP.unit_stride || mop === VLSU_MOP.indexed_unordered),
+      is_store-> (mop === VLSU_MOP.unit_stride || mop === VLSU_MOP.indexed_unordered),
+      is_varith -> ivv,
+    )
+  )
+
+  val is_vd_vec   = is_load || is_store
 
   val out = Wire(new VDecOutput)
   out.vuop.varith    := in.vec_arith
@@ -82,12 +112,12 @@ class VecDecoder extends Module {
   out.vuop.sew := Mux(in.vec_load, func3, vtype(5,3))
   out.vuop.lmul := vtype(2,0)
   out.vuop.wen := true.B
-  out.vs1 := Mux(in.is_vs1_vec, io.rdata1, Cat(0.U, in.rs1))
-  out.vs2 := Mux(in.is_vs2_vec, io.rdata2, Cat(0.U, in.rs2))
+  out.vs1 := Mux(is_vs1_vec, io.rdata1, Cat(0.U, in.rs1))
+  out.vs2 := Mux(is_vs2_vec, io.rdata2, Cat(0.U, in.rs2))
   out.vs3 := in.addr_vd
 
   io.out.bits   := RegEnable(out, buffer.io.out.fire())
-  io.out.valid  := RegEnable(buffer.io.out.valid, buffer.io.out.fire())
+  io.out.valid  := RegNext(buffer.io.out.fire())
 
   dontTouch(buffer.io.out.bits.pc)
 }
