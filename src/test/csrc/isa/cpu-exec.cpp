@@ -104,7 +104,7 @@ bool if_end(){
 }
 
 void cpu_exec(uint64_t n){
-  uint64_t max = 20000;
+  uint64_t max = 40000;
   // max = n;
     for(; max > 0; max--){
       if(if_end() | contextp->gotFinish() | if_stop){

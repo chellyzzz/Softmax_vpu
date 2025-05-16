@@ -5,8 +5,8 @@ VerilatedContext* contextp = new VerilatedContext;
 Vtop* top =new Vtop{contextp};  
 
 #ifdef VCD
-    #include "verilated_vcd_c.h"
-    VerilatedVcdC* tfp = nullptr;
+    #include <verilated_fst_c.h>
+    VerilatedFstC* tfp = nullptr;
 #endif
 
 
@@ -15,9 +15,9 @@ void init_sim(int argc, char *argv[]) {
     top->clock = 0;
 #ifdef VCD
     contextp->traceEverOn(true);
-    tfp = new VerilatedVcdC;
+    tfp = new VerilatedFstC;
     top->trace(tfp, 99);
-    tfp->open("build/top.vcd");
+    tfp->open("build/top.fst");
     printf("VCD enabled\n");
 #endif
     Verilated::commandArgs(argc,argv);

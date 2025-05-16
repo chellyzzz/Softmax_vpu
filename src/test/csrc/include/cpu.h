@@ -25,8 +25,8 @@ extern Vtop* top;
 
 #define VCD 1
 #ifdef VCD
-    #include "verilated_vcd_c.h"
-   extern VerilatedVcdC* tfp;
+    #include <verilated_fst_c.h>
+   extern VerilatedFstC* tfp;
 #endif
 
 

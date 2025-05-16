@@ -1,7 +1,7 @@
 // #include <isa.h>
 // #include "Vtop.h"
 // #include "verilated.h"
-// #include "verilated_vcd_c.h"
+// #include <verilated_fst_c.h>
 
 // const char *regs[] = {
 //   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2", //7

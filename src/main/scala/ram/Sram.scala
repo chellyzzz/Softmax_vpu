@@ -16,7 +16,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   setInline("sram.v",
             """
 
-
   module ram_simulation #(
       parameter                           ADDR_WIDTH = 32            ,
       parameter                           DATA_WIDTH = 32            ,
@@ -58,73 +57,53 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   import "DPI-C" function void npc_pmem_read (input int raddr, output int rdata, input bit ren, input int len);
   import "DPI-C" function void npc_pmem_write (input int waddr, input int wdata, input bit wen, input int len);
   // AXI4LITE signals
-      reg             [ADDR_WIDTH-1 : 0]                  axi_awaddr  ;
-      reg                                                 axi_awready ;
-      reg                                                 axi_wready  ;
-      reg             [   1:0]                            axi_bresp   ;
-      reg                                                 axi_bvalid  ;
-      reg             [ADDR_WIDTH-1 : 0]                  axi_araddr  ;
-      reg                                                 axi_arready ;
-      reg              [   7:0]                           axi_arlen ;
-      reg              [   2:0]                           axi_arsize;  
-      reg              [   1:0]                           axi_arburst ;
-      reg             [DATA_WIDTH-1 : 0]                  axi_rdata   ;
-      reg             [   1:0]                            axi_rresp   ;
-      reg                                                 axi_rvalid  ;
-      reg                                                 axi_rlast   ;
+    reg             [ADDR_WIDTH-1 : 0]                  axi_awaddr  ;
+    reg                                                 axi_awready ;
+    reg             [   1:0]                            axi_awburst ;
+    reg             [   2:0]                            axi_awsize  ;
+    reg             [   7:0]                            axi_awlen   ;
+    reg                                                 axi_wready  ;
+    reg             [   1:0]                            axi_bresp   ;
+    reg                                                 axi_bvalid  ;
+    reg                                                 axi_arready ;
+    reg             [   7:0]                            axi_arlen   ;
+    reg             [   2:0]                            axi_arsize  ;  
+    reg             [   1:0]                            axi_arburst ;
+    reg             [DATA_WIDTH-1 : 0]                  axi_rdata   ;
+    reg             [   1:0]                            axi_rresp   ;
+    reg                                                 axi_rvalid  ;
+    reg                                                 axi_rlast   ;
       //hello
   //----------------------------------------------
   //-- Signals for user logic register space example
   //------------------------------------------------
   //-- Number of Slave Registers 4
-      reg             [DATA_WIDTH-1:0]                    slv_reg0    ;
-      wire                                                slv_reg_rden    ;
-      wire                                                slv_reg_wren    ;
-      reg             [DATA_WIDTH-1:0]                    reg_data_out    ;
-      integer                                             byte_index  ;
-      reg                                                 aw_en   ;
-  // I/O Connections assignments
-  assign sram_AXI_AWREADY	= axi_awready;
-  assign sram_AXI_WREADY	= axi_wready;
-  assign sram_AXI_BRESP	    = axi_bresp;
-  assign sram_AXI_BVALID	= axi_bvalid;
-  assign sram_AXI_BID       = 'b0;
-  assign sram_AXI_ARREADY	= axi_arready;
-  assign sram_AXI_RDATA	    = axi_rdata;
-  assign sram_AXI_RRESP	    = axi_rresp;
-  assign sram_AXI_RVALID	= axi_rvalid;
-  assign sram_AXI_RLAST	    = axi_rlast;
-  assign sram_AXI_RID       = 'b0;
+    reg             [DATA_WIDTH-1:0]                    slv_reg0    ;
+    wire                                                slv_reg_rden    ;
+    wire                                                slv_reg_wren    ;
+    reg             [DATA_WIDTH-1:0]                    reg_data_out    ;
+    integer                                             byte_index  ;
 
-  always @( posedge clock)
-  begin
-      if ( reset == 1'b1 )
-      begin
-          axi_awready <= 1'b0;
-          aw_en <= 1'b1;
-      end 
-      else
-      begin    
-          if (~axi_awready && sram_AXI_AWVALID && sram_AXI_WVALID && aw_en)
-          begin
-              // slave is ready to accept write address when 
-              // there is a valid write address and write data
-              // on the write address and data bus. This design 
-              // expects no outstanding transactions. 
-              axi_awready <= 1'b1;
-              aw_en <= 1'b0;
-          end
-          else if (sram_AXI_BREADY && axi_bvalid)
-              begin
-                  aw_en <= 1'b1;
-                  axi_awready <= 1'b0;
-              end
-          else           
-          begin
-              axi_awready <= 1'b0;
-          end
-      end 
-  end       
+  // I/O Connections assignments
+  assign sram_AXI_AWREADY	    = axi_awready;
+  assign sram_AXI_WREADY	    = axi_wready;
+  assign sram_AXI_BRESP	      = axi_bresp;
+  assign sram_AXI_BVALID	    = axi_bvalid;
+  assign sram_AXI_BID         = 'b0;
+  assign sram_AXI_ARREADY	    = axi_arready;
+  assign sram_AXI_RDATA	      = axi_rdata;
+  assign sram_AXI_RRESP	      = axi_rresp;
+  assign sram_AXI_RVALID	    = axi_rvalid;
+  assign sram_AXI_RLAST	      = axi_rlast;
+  assign sram_AXI_RID         = 'b0;
+
+  reg             [7:0]                               write_count ;
+  reg                                                 writing ;
+  wire            [31:0]                              write_length    ;
+  reg             [ADDR_WIDTH-1 : 0]                  current_waddr   ;
+  assign write_length   = 1 << axi_awsize;
+
+  assign slv_reg_wren = axi_wready && sram_AXI_WVALID && axi_awready && sram_AXI_AWVALID;  
   always @(posedge clock) begin
       case(sram_AXI_WSTRB)
       4'b0001: begin  npc_pmem_write(axi_awaddr, sram_AXI_WDATA, slv_reg_wren, 1); end
@@ -138,6 +117,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
       end
       endcase
   end
+
   // Implement axi_awaddr latching
   // This process is used to latch the address when both 
   // sram_AXI_AWVALID and sram_AXI_WVALID are valid. 
@@ -146,16 +126,36 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
       if ( reset == 1'b1 )
       begin
           axi_awaddr <= 0;
+          axi_awready <= 1'b0;
+          axi_awburst <= 'b0;
+          axi_awlen <= 'b0;
+          writing <= 1'b0;
+          write_count <= 8'b0;
       end 
       else
       begin    
-          if (~axi_awready && sram_AXI_AWVALID && sram_AXI_WVALID && aw_en)
+          if (~axi_awready && sram_AXI_AWVALID && ~writing)
           begin
               // Write Address latching 
-              axi_awaddr <= sram_AXI_AWADDR;
+              axi_awaddr  <= sram_AXI_AWADDR;
+              axi_awburst <= sram_AXI_AWBURST;
+              axi_awready <= 1'b1;
+              writing     <= 1'b1;
+              axi_awsize  <= sram_AXI_AWSIZE;
           end
+          else if(axi_awready && sram_AXI_AWVALID) begin
+            axi_awready <= 'b0;
+            current_waddr <= sram_AXI_AWADDR;
+          end
+          else if (sram_AXI_BREADY && axi_bvalid)
+            begin
+                writing <= 1'b0;
+                axi_awready <= 1'b0;
+            end   
       end 
   end      
+
+
   // Implement axi_wready generation
   // axi_wready is asserted for one clock clock cycle when both
   // sram_AXI_AWVALID and sram_AXI_WVALID are asserted. axi_wready is 
@@ -167,21 +167,44 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
           axi_wready <= 1'b0;
       end 
       else
-      begin    
-          if (~axi_wready && sram_AXI_WVALID && sram_AXI_AWVALID && aw_en )
-          begin
-              // slave is ready to accept write data when 
-              // there is a valid write address and write data
-              // on the write address and data bus. This design 
-              // expects no outstanding transactions. 
-              axi_wready <= 1'b1;
+      begin 
+        if(~writing) begin
+          write_count <= 'b0;
+          if(sram_AXI_AWVALID && sram_AXI_AWREADY && sram_AXI_WVALID && ~sram_AXI_WREADY) begin
+            axi_wready <= 1'b1;
+            writing    <= 1'b1;
           end
-          else
-          begin
-              axi_wready <= 1'b0;
+        end  
+        else begin
+          if(sram_AXI_WVALID && sram_AXI_WREADY) begin
+            if(write_count === axi_awlen) begin
+                writing <= 1'b0;
+            end
+            else begin 
+              write_count <= write_count + 1'b1;
+              case(axi_awburst)
+                2'b01: current_waddr <= current_waddr + write_length;       // INCR
+                2'b00: current_waddr <= current_waddr;                     // FIXED
+                default: current_waddr <= current_waddr;                   // WRAP: 可扩展
+              endcase
+            end
           end
+        end 
+          // if (~axi_wready && sram_AXI_WVALID && sram_AXI_AWVALID && ~writing )
+          // begin
+          //     // slave is ready to accept write data when 
+          //     // there is a valid write address and write data
+          //     // on the write address and data bus. This design 
+          //     // expects no outstanding transactions. 
+          //     axi_wready <= 1'b1;
+          // end
+          // else
+          // begin
+          //     axi_wready <= 1'b0;
+          // end
       end 
-  end       
+  end     
+
   // Implement write response logic generation
   // The write response and response valid signals are asserted by the slave 
   // when axi_wready, sram_AXI_WVALID, axi_wready and sram_AXI_WVALID are asserted.  
@@ -219,10 +242,10 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
       end
   end   
 
-    reg [7:0] read_count;
-    reg reading;
-    reg [ADDR_WIDTH-1 : 0]  current_raddr  ;
-    wire [31:0] read_length;
+    reg             [7:0]                               read_count  ;
+    reg                                                 reading ;
+    reg             [ADDR_WIDTH-1 : 0]                  current_raddr   ;
+    wire            [31:0]                              read_length ;
     assign read_length = 1 << axi_arsize;
   // Implement axi_arready generation
   always @( posedge clock )
@@ -230,7 +253,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
       if ( reset == 1'b1 )
       begin
         axi_arready <= 1'b0;
-        axi_araddr  <= 32'b0;
         axi_arsize  <= 'b0;
         axi_arlen   <= 'b0;
         axi_arburst <= 'b0;
@@ -243,7 +265,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
               // indicates that the slave has acceped the valid read address
                 axi_arready <= 1'b1;
               // Read address latching
-                axi_araddr  <= sram_AXI_ARADDR;
                 axi_arsize  <= sram_AXI_ARSIZE;
                 axi_arlen   <= sram_AXI_ARLEN;
                 axi_arburst <= sram_AXI_ARBURST;
@@ -255,6 +276,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
           end
       end 
   end       
+  
   always @( posedge clock )
   begin
     if ( reset == 1'b1 ) begin
@@ -276,12 +298,12 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
     end   
     else if(reading) begin
             if(axi_rvalid && sram_AXI_RREADY) begin
-            if(read_count == axi_arlen) begin
-                reading <= 0;
-                axi_rvalid <= 1'b0;
-                axi_rresp  <= 2'b0; // 'IDLE' response
-                axi_rlast <= 1'b1;
-            end
+              if(read_count == axi_arlen) begin
+                  reading <= 0;
+                  axi_rvalid <= 1'b0;
+                  axi_rresp  <= 2'b0; // 'IDLE' response
+                  axi_rlast <= 1'b1;
+              end
             else begin
                 read_count <= read_count + 1'b1;
                 case (axi_arburst)
@@ -296,8 +318,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
 
 
   assign slv_reg_rden = reading;
-  assign slv_reg_wren = axi_wready && sram_AXI_WVALID && axi_awready && sram_AXI_AWVALID;
-
   always @(posedge clock)
   begin
       npc_pmem_read (current_raddr, reg_data_out, slv_reg_rden, read_length);
@@ -325,8 +345,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   end    
 
 endmodule
-
-
 
 """.stripMargin)
 
