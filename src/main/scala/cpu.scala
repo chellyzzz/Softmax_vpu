@@ -258,8 +258,10 @@ class CpuCore extends Module {
 
   vectorregfile.io.raddr1 := vectordecoder.io.ctrl.addr_vs1
   vectorregfile.io.raddr2 := vectordecoder.io.ctrl.addr_vs2
-  vectordecoder.io.rdata1 := vectorregfile.io.rdata1
-  vectordecoder.io.rdata2 := vectorregfile.io.rdata2
+  vectorregfile.io.raddr3 := vectordecoder.io.ctrl.addr_vd
+  vectordecoder.io.rdata_vs1 := vectorregfile.io.rdata_vs1
+  vectordecoder.io.rdata_vs2 := vectorregfile.io.rdata_vs2
+  vectordecoder.io.rdata_vs3 := vectorregfile.io.rdata_vs3
 
   val exu_pc_next = Wire(UInt(32.W))
   exu.io.idu_vset := idu2exu_regs.io.out_vset

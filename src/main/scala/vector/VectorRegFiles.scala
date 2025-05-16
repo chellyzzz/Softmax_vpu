@@ -11,11 +11,13 @@ class VectorRegisterFile extends Module {
     val waddr = Input(UInt(4.W))
     val wen = Input(Bool())
 
-    val raddr1 = Input(UInt(4.W))
-    val raddr2 = Input(UInt(4.W))
+    val raddr1 = Input(UInt(5.W))
+    val raddr2 = Input(UInt(5.W))
+    val raddr3 = Input(UInt(5.W))
 
-    val rdata1 = Output(UInt(VLEN.W))
-    val rdata2 = Output(UInt(VLEN.W))
+    val rdata_vs1 = Output(UInt(VLEN.W))
+    val rdata_vs2 = Output(UInt(VLEN.W))
+    val rdata_vs3 = Output(UInt(VLEN.W))
 
   })
 
@@ -25,8 +27,9 @@ class VectorRegisterFile extends Module {
     regfile(io.waddr) := io.wdata
   }
 
-  io.rdata1 := regfile(io.raddr1)
+  io.rdata_vs1 := regfile(io.raddr1)
+  io.rdata_vs2 := regfile(io.raddr2)
+  io.rdata_vs3 := regfile(io.raddr3)
 
-  io.rdata2 := regfile(io.raddr2)
 }
 

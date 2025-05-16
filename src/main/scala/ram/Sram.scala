@@ -16,6 +16,8 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   setInline("sram.v",
             """
 
+
+
   module ram_simulation #(
       parameter                           ADDR_WIDTH = 32            ,
       parameter                           DATA_WIDTH = 32            ,
@@ -57,7 +59,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   import "DPI-C" function void npc_pmem_read (input int raddr, output int rdata, input bit ren, input int len);
   import "DPI-C" function void npc_pmem_write (input int waddr, input int wdata, input bit wen, input int len);
   // AXI4LITE signals
-    reg             [ADDR_WIDTH-1 : 0]                  axi_awaddr  ;
     reg                                                 axi_awready ;
     reg             [   1:0]                            axi_awburst ;
     reg             [   2:0]                            axi_awsize  ;
@@ -80,7 +81,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   //-- Number of Slave Registers 4
     reg             [DATA_WIDTH-1:0]                    slv_reg0    ;
     wire                                                slv_reg_rden    ;
-    wire                                                slv_reg_wren    ;
+    wire                                                slv_reg_wen    ;
     reg             [DATA_WIDTH-1:0]                    reg_data_out    ;
     integer                                             byte_index  ;
 
@@ -103,14 +104,14 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   reg             [ADDR_WIDTH-1 : 0]                  current_waddr   ;
   assign write_length   = 1 << axi_awsize;
 
-  assign slv_reg_wren = axi_wready && sram_AXI_WVALID && axi_awready && sram_AXI_AWVALID;  
+  assign slv_reg_wen = axi_wready && sram_AXI_WVALID;  
   always @(posedge clock) begin
       case(sram_AXI_WSTRB)
-      4'b0001: begin  npc_pmem_write(axi_awaddr, sram_AXI_WDATA, slv_reg_wren, 1); end
-      4'b0011: begin  npc_pmem_write(axi_awaddr, sram_AXI_WDATA, slv_reg_wren, 2); end
-      4'b1111: begin  npc_pmem_write(axi_awaddr, sram_AXI_WDATA, slv_reg_wren, 4); end
+      4'b0001: begin  npc_pmem_write(current_waddr, sram_AXI_WDATA, slv_reg_wen, 1); end
+      4'b0011: begin  npc_pmem_write(current_waddr, sram_AXI_WDATA, slv_reg_wen, 2); end
+      4'b1111: begin  npc_pmem_write(current_waddr, sram_AXI_WDATA, slv_reg_wen, 4); end
       default: begin 
-          if(slv_reg_wren) begin
+          if(slv_reg_wen) begin
               $display("SRAM WIRTE ERROR: should not reach here");
               $finish;
           end
@@ -125,7 +126,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   begin
       if ( reset == 1'b1 )
       begin
-          axi_awaddr <= 0;
           axi_awready <= 1'b0;
           axi_awburst <= 'b0;
           axi_awlen <= 'b0;
@@ -137,21 +137,16 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
           if (~axi_awready && sram_AXI_AWVALID && ~writing)
           begin
               // Write Address latching 
-              axi_awaddr  <= sram_AXI_AWADDR;
+              current_waddr <= sram_AXI_AWADDR;
               axi_awburst <= sram_AXI_AWBURST;
               axi_awready <= 1'b1;
+              axi_awlen   <= sram_AXI_AWLEN;
               writing     <= 1'b1;
               axi_awsize  <= sram_AXI_AWSIZE;
           end
           else if(axi_awready && sram_AXI_AWVALID) begin
             axi_awready <= 'b0;
-            current_waddr <= sram_AXI_AWADDR;
-          end
-          else if (sram_AXI_BREADY && axi_bvalid)
-            begin
-                writing <= 1'b0;
-                axi_awready <= 1'b0;
-            end   
+          end 
       end 
   end      
 
@@ -170,7 +165,7 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
       begin 
         if(~writing) begin
           write_count <= 'b0;
-          if(sram_AXI_AWVALID && sram_AXI_AWREADY && sram_AXI_WVALID && ~sram_AXI_WREADY) begin
+          if(sram_AXI_AWVALID && sram_AXI_WVALID && ~sram_AXI_WREADY) begin
             axi_wready <= 1'b1;
             writing    <= 1'b1;
           end
@@ -178,7 +173,8 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
         else begin
           if(sram_AXI_WVALID && sram_AXI_WREADY) begin
             if(write_count === axi_awlen) begin
-                writing <= 1'b0;
+                writing       <= 1'b0;
+                axi_wready    <= 1'b0;
             end
             else begin 
               write_count <= write_count + 1'b1;
@@ -190,18 +186,6 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
             end
           end
         end 
-          // if (~axi_wready && sram_AXI_WVALID && sram_AXI_AWVALID && ~writing )
-          // begin
-          //     // slave is ready to accept write data when 
-          //     // there is a valid write address and write data
-          //     // on the write address and data bus. This design 
-          //     // expects no outstanding transactions. 
-          //     axi_wready <= 1'b1;
-          // end
-          // else
-          // begin
-          //     axi_wready <= 1'b0;
-          // end
       end 
   end     
 
@@ -219,26 +203,15 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
       end 
       else
       begin    
-          if (axi_awready && sram_AXI_AWVALID && ~axi_bvalid && axi_wready && sram_AXI_WVALID)
+          if (sram_AXI_WVALID && sram_AXI_WREADY && (write_count === axi_awlen))
           begin
-              // indicates a valid write response is available
               axi_bvalid <= 1'b1;
-              /*********/
               axi_bresp  <= 2'b1; // 'OKAY' response 
-              /*********/
           end                   // work error responses in future
-          else
-          begin
-              if (sram_AXI_BREADY && axi_bvalid) 
-              //check if bready is asserted while bvalid is high) 
-              //(there is a possibility that bready is always asserted high)   
-              begin
-                  axi_bvalid <= 1'b0; 
-                  /*********/
-                  axi_bresp  <= 2'b0; // 'OKAY' response 
-                  /*********/
-              end  
-          end
+          else if (sram_AXI_BREADY && axi_bvalid) begin
+              axi_bvalid <= 1'b0; 
+              axi_bresp  <= 2'b0; // 'OKAY' response 
+          end  
       end
   end   
 
@@ -345,6 +318,8 @@ class ram_simulation extends BlackBox with HasBlackBoxInline {
   end    
 
 endmodule
+
+
 
 """.stripMargin)
 

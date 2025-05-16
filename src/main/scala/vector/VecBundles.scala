@@ -22,6 +22,7 @@ class Vuop extends Bundle{
 class VControl extends Bundle {
   val addr_vs1 = UInt(5.W)
   val addr_vs2 = UInt(5.W)
+  val addr_vd  = UInt(5.W)
 }
 
 class VDecOutput extends Bundle{

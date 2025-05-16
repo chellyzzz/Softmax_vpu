@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import cpu.Parameter._
 import cpu._
+import scala.reflect.internal.Reporter.INFO
 
 
 class VecInstrBuffer(val depth: Int = 16) extends Module {
@@ -35,8 +36,9 @@ class VecDecoder extends Module {
   val io = IO(new Bundle {
     val in          = Flipped(Decoupled(new VDecInput))
     val flush       = Input(Bool())
-    val rdata1      = Input(UInt(VLEN.W))
-    val rdata2      = Input(UInt(VLEN.W))
+    val rdata_vs1  = Input(UInt(VLEN.W))
+    val rdata_vs2  = Input(UInt(VLEN.W))
+    val rdata_vs3   = Input(UInt(VLEN.W))
     val ctrl        = Output(new VControl)
     val out         = Decoupled(new VDecOutput)
   })
@@ -50,6 +52,8 @@ class VecDecoder extends Module {
   val in = buffer.io.out.bits
   io.ctrl.addr_vs1 := in.addr_vs1
   io.ctrl.addr_vs2 := in.addr_vs2
+  io.ctrl.addr_vd  := in.addr_vd
+
 
   val vtype   = in.vtype
   val func3   = in.func3
@@ -109,12 +113,12 @@ class VecDecoder extends Module {
   
   out.vuop.vma := vtype(7)
   out.vuop.vta := vtype(6)
-  out.vuop.sew := Mux(in.vec_load, func3, vtype(5,3))
+  out.vuop.sew := Mux(in.vec_load || in.vec_store, func3, vtype(5,3))
   out.vuop.lmul := vtype(2,0)
-  out.vuop.wen := true.B
-  out.vs1 := Mux(is_vs1_vec, io.rdata1, Cat(0.U, in.rs1))
-  out.vs2 := Mux(is_vs2_vec, io.rdata2, Cat(0.U, in.rs2))
-  out.vs3 := in.addr_vd
+  out.vuop.wen := !in.vec_store
+  out.vs1 := Mux(is_vs1_vec, io.rdata_vs1, Cat(0.U, in.rs1))
+  out.vs2 := Mux(is_vs2_vec, io.rdata_vs2, Cat(0.U, in.rs2))
+  out.vs3 := io.rdata_vs3
 
   io.out.bits   := RegEnable(out, buffer.io.out.fire())
   io.out.valid  := RegNext(buffer.io.out.fire())

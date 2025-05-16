@@ -24,7 +24,7 @@ class VectorLSU extends Module {
 
   // AXI signals
   val axi_awvalid = RegInit(false.B)
-  val axi_wdata   = RegInit(0.U(32.W))
+  val axi_wdata   = Wire(UInt(32.W))
   val axi_wvalid  = RegInit(false.B)
   val axi_arvalid = RegInit(false.B)
   val axi_rready  = RegInit(false.B)
@@ -68,29 +68,31 @@ class VectorLSU extends Module {
   val axi_wdata_e32  = Wire(Vec((VLEN/32), UInt(32.W)))
   val axi_wdata_e16  = Wire(Vec((VLEN/16), UInt(16.W)))
   val axi_wdata_e8   = Wire(Vec((VLEN/8), UInt(8.W)))
-  axi_wdata_e32 := io.storeSrc.asTypeOf(axi_wdata_e32)
-  axi_wdata_e16 := io.storeSrc.asTypeOf(axi_wdata_e16)
-  axi_wdata_e8  := io.storeSrc.asTypeOf(axi_wdata_e8 )
+  axi_wdata_e32      := io.storeSrc.asTypeOf(axi_wdata_e32)
+  axi_wdata_e16      := io.storeSrc.asTypeOf(axi_wdata_e16)
+  axi_wdata_e8       := io.storeSrc.asTypeOf(axi_wdata_e8 )
   val writing        = RegInit(false.B)
 
-  when(txn_pulse_store && !busy) {
+  // val axi_wdata  := MuxLookup(vuop.sew, 0.U(32.W), List(
+  // ELEMENT_WIDTH.width32 -> axi_wdata_e32(write_index),
+  // ELEMENT_WIDTH.width16 -> axi_wdata_e16(write_index),
+  // ELEMENT_WIDTH.width8  -> axi_wdata_e8 (write_index)
+  // ))
+  axi_wdata := axi_wdata_e32(write_index)
+
+  when(txn_pulse_store && !busy && !axi_awvalid) {
     axi_awvalid := true.B
     axi_axaddr  := io.base_addr
+    writing := true.B
     write_index := 0.U
   }.elsewhen(io.axi_master.AXI_AWREADY && axi_awvalid) {
     axi_awvalid := false.B
-    writing := true.B
   }
 
-  when(((txn_pulse_store && !busy) || writing) && !axi_wvalid) {
-    axi_wvalid := true.B
+  when(!axi_wvalid && ((txn_pulse_store && !busy) || writing)) {
+      axi_wvalid := true.B
   }.elsewhen(io.axi_master.AXI_WREADY && axi_wvalid) {
     axi_wvalid := false.B
-    axi_wdata  := MuxLookup(vuop.sew, 0.U, Seq(
-    ELEMENT_WIDTH.width32 -> axi_wdata_e32(write_index),
-    ELEMENT_WIDTH.width16 -> axi_wdata_e16(write_index),
-    ELEMENT_WIDTH.width8  -> axi_wdata_e8 (write_index)
-    ))
     when(write_index === "b11".U(3.W)){
       writing := false.B
     }.elsewhen(vuop.sew === ELEMENT_WIDTH.width32){
@@ -151,8 +153,10 @@ class VectorLSU extends Module {
 
   when(txn_pulse_load || txn_pulse_store){
     busy := true.B
-  }.elsewhen(io.axi_master.AXI_RLAST){
+  }.elsewhen(io.axi_master.AXI_RLAST || (io.axi_master.AXI_BREADY && io.axi_master.AXI_BVALID)){
     busy := false.B
+    reading := false.B
+    writing := false.B
   }
 
   io.out.valid := io.axi_master.AXI_RLAST

@@ -100,7 +100,11 @@ int hit_goodtrap(){
 }
 
 bool if_end(){
-  return (top->rootp->io_ebreak == 1);
+   if(top->rootp->io_ebreak == 1){
+      single_cycle();
+      return true;
+   }
+   else return false;
 }
 
 void cpu_exec(uint64_t n){

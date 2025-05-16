@@ -34,7 +34,7 @@ class VectorExecution extends Module {
   val addr = in.vs1(31,0) + in.vs2(31,0)
   val vlsu = Module(new VectorLSU)
   io.vlsu <> vlsu.io.axi_master
-  vlsu.io.storeSrc  := in.vs2 //TODO: check if this is correct  
+  vlsu.io.storeSrc  := in.vs3
   vlsu.io.base_addr := addr
   vlsu.io.in.bits   := in.vuop
   vlsu.io.in.valid  := io.in.valid && (in.vuop.vload || in.vuop.vstore)
