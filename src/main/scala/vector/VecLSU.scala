@@ -37,11 +37,10 @@ class VectorLSU extends Module {
     ELEMENT_WIDTH.width32 -> "b010".U,
     ELEMENT_WIDTH.width64 -> "b011".U   // not supported
   ))
-
   io.axi_master.AXI_AWADDR  := axi_axaddr
   io.axi_master.AXI_WDATA   := axi_wdata
   io.axi_master.AXI_AWVALID := axi_awvalid
-  io.axi_master.AXI_AWLEN   := "b11".U(8.W)
+  io.axi_master.AXI_AWLEN   := AXI_AXLEN.U(8.W)
   io.axi_master.AXI_AWSIZE  := axi_axsize
   io.axi_master.AXI_AWID    := 0.U
   io.axi_master.AXI_AWBURST := "b01".U
@@ -54,17 +53,18 @@ class VectorLSU extends Module {
 
   io.axi_master.AXI_ARADDR  := axi_axaddr
   io.axi_master.AXI_ARVALID := axi_arvalid
-  io.axi_master.AXI_ARLEN   := "b11".U(8.W)
+  io.axi_master.AXI_ARLEN   := AXI_AXLEN.U(8.W)
   io.axi_master.AXI_ARSIZE  := axi_axsize
   io.axi_master.AXI_ARBURST := "b01".U
   io.axi_master.AXI_ARID    := 0.U
   io.axi_master.AXI_RREADY  := axi_rready
   
-  val txn_pulse_load   = RegNext(vuop.vload && io.in.fire())
-  val txn_pulse_store  = RegNext(vuop.vstore&& io.in.fire())
+  val valid_old        = RegNext(io.in.valid)
+  val txn_pulse_load   = RegNext(vuop.vload && io.in.fire() && ~valid_old)
+  val txn_pulse_store  = RegNext(vuop.vstore&& io.in.fire() && ~valid_old)
 
   // index control
-  val write_index    = RegInit(0.U(4.W))
+  val write_index    = RegInit(0.U(8.W))
   val axi_wdata_e32  = Wire(Vec((VLEN/32), UInt(32.W)))
   val axi_wdata_e16  = Wire(Vec((VLEN/16), UInt(16.W)))
   val axi_wdata_e8   = Wire(Vec((VLEN/8), UInt(8.W)))
@@ -93,7 +93,7 @@ class VectorLSU extends Module {
       axi_wvalid := true.B
   }.elsewhen(io.axi_master.AXI_WREADY && axi_wvalid) {
     axi_wvalid := false.B
-    when(write_index === "b11".U(3.W)){
+    when(write_index === io.axi_master.AXI_AWLEN){
       writing := false.B
     }.elsewhen(vuop.sew === ELEMENT_WIDTH.width32){
       write_index := write_index + 1.U
@@ -107,7 +107,7 @@ class VectorLSU extends Module {
   }
 
   // index control
-  val read_index     = RegInit(0.U(4.W))
+  val read_index     = RegInit(0.U(8.W))
   val axi_rdata_e32  = Reg(Vec((VLEN/32), UInt(32.W)))
   val axi_rdata_e16  = Reg(Vec((VLEN/16), UInt(16.W)))
   val axi_rdata_e8   = Reg(Vec((VLEN/8),  UInt(8.W)))
@@ -147,7 +147,7 @@ class VectorLSU extends Module {
   io.in.ready := ready
   when(io.in.fire()){
     ready := false.B
-  }.elsewhen(io.axi_master.AXI_RLAST){
+  }.elsewhen(io.axi_master.AXI_RLAST || (io.axi_master.AXI_BREADY && io.axi_master.AXI_BVALID)){
     ready := true.B
   }
 

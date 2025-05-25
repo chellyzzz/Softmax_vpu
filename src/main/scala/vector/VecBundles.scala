@@ -16,6 +16,10 @@ class Vuop extends Bundle{
   val vload     = Bool()
   val vstore    = Bool()
   val varith    = Bool()
+  val vfa       = Bool()
+  val vfma      = Bool()
+  val vfdiv     = Bool()
+  val vfcvt     = Bool()
   val addr_vd   = UInt(5.W)
 }
 

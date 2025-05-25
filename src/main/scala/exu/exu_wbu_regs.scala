@@ -43,7 +43,8 @@ class EXU_WBU_Regs extends Module {
     val i_post_ready = Input(Bool())
     val o_post_valid = Input(Bool())
     val next = if (debug) Output(Bool()) else Output(UInt(0.W))
-
+    val i_pc = if (debug) Input(UInt(32.W)) else Output(UInt(0.W))
+    val o_diff_pc = if (debug) Output(UInt(32.W)) else Output(UInt(0.W))
   })
 
   // Default reset values
@@ -59,7 +60,8 @@ class EXU_WBU_Regs extends Module {
   val o_ecall      = RegInit(false.B)
   val o_res        = RegInit(0.U(DataWidth.W))
   val o_ebreak     = RegInit(false.B)
-
+  
+  
   if(debug){
       val next = RegInit(false.B)
       io.next := next
@@ -113,4 +115,9 @@ class EXU_WBU_Regs extends Module {
   io.o_ebreak := o_ebreak
 
   io.wbu_vset := RegNext(Mux(io.i_post_ready && io.o_post_valid, io.exu_vset, 0.U.asTypeOf(new EXU_VSET)))
+
+
+  if(Parameter.debug){
+    io.o_diff_pc := RegNext(Mux(io.i_post_ready && io.o_post_valid, io.i_pc,  0.U(32.W)))
+  }
 }

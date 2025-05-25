@@ -28,5 +28,5 @@ class top extends Module {
 }
 
 object topMain extends App {
-  (new ChiselStage).emitVerilog(new top, args)
+  (new chisel3.stage.ChiselStage).emitVerilog(new CpuCore, args)
 }

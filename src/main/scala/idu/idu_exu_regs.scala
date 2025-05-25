@@ -12,7 +12,7 @@ class IDU_EXU_OUT extends Bundle{
   val imm = UInt(DataWidth.W)
   val src_sel1 = UInt(2.W)
   val src_sel2 = UInt(3.W)
-  val rd = UInt(4.W)
+  val rd = UInt(RegAddrWidth.W)
   val exu_opt = UInt(3.W)
   val alu_opt = UInt(OptWidth.W)
   val wen = Bool()
@@ -65,7 +65,7 @@ class IDU_EXU_Regs extends Module {
     val i_csr_addr     = Input(UInt(12.W))
     val src1           = Input(UInt(DataWidth.W))
     val src2           = Input(UInt(DataWidth.W))
-    val i_rd           = Input(UInt(4.W))
+    val i_rd           = Input(UInt(RegAddrWidth.W))
     val i_csr_rs2      = Input(UInt(DataWidth.W))
     val i_csr_src_sel  = Input(Bool())
 

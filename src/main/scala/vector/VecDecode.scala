@@ -36,19 +36,19 @@ class VecDecoder extends Module {
   val io = IO(new Bundle {
     val in          = Flipped(Decoupled(new VDecInput))
     val flush       = Input(Bool())
-    val rdata_vs1  = Input(UInt(VLEN.W))
-    val rdata_vs2  = Input(UInt(VLEN.W))
+    val rdata_vs1   = Input(UInt(VLEN.W))
+    val rdata_vs2   = Input(UInt(VLEN.W))
     val rdata_vs3   = Input(UInt(VLEN.W))
     val ctrl        = Output(new VControl)
     val out         = Decoupled(new VDecOutput)
   })
-
 
   val buffer = Module(new VecInstrBuffer)
   buffer.io.in <> io.in
   buffer.io.flush := io.flush
   buffer.io.out.ready := io.out.ready
 
+  val is_buffer_empty = buffer.io.out.valid
   val in = buffer.io.out.bits
   io.ctrl.addr_vs1 := in.addr_vs1
   io.ctrl.addr_vs2 := in.addr_vs2
@@ -57,9 +57,9 @@ class VecDecoder extends Module {
 
   val vtype   = in.vtype
   val func3   = in.func3
-  val func7   = in.imm 
+  val func6   = in.imm 
   val funct3  = func3
-  val mop     = func7(2, 1)
+  val mop     = func6(2, 1)
   val ivv = (funct3 === "b000".U)
   val ivx = (funct3 === "b100".U)
   val ivi = (funct3 === "b011".U)
@@ -71,7 +71,7 @@ class VecDecoder extends Module {
   val is_load   = in.vec_load
   val is_store  = in.vec_store
   val is_varith = in.vec_arith
-
+  
   val is_vs1_vec  = Mux1H(
     Seq(
       is_load -> false.B,
@@ -90,16 +90,20 @@ class VecDecoder extends Module {
   val is_vd_vec   = is_load || is_store
 
   val out = Wire(new VDecOutput)
+  val vadd  = (func3 === "b000".U) && (func6 === "b0000001".U)
+  val vfadd = (func3 === "b000".U) && (func6 === "b0000000".U)
+  val vfma  = (func3 === "b000".U) && (func6 === "b0000100".U)
+  val vfdiv = (func3 === "b100".U) && (func6 === "b0000000".U)
+  val vfcvt = (func3 === "b110".U) && (func6 === "b0000000".U)
+
   out.vuop.varith    := in.vec_arith
+  out.vuop.vfa       := vfadd
+  out.vuop.vfma      := vfma
+  out.vuop.vfdiv     := vfdiv
+  out.vuop.vfcvt     := vfcvt
   out.vuop.vload     := in.vec_load
   out.vuop.vstore    := in.vec_store
   out.vuop.addr_vd   := in.addr_vd
-  
-  val vadd  = (func3 === "b000".U) && (func7 === "b0000001".U)
-  val vfadd = (func3 === "b000".U) && (func7 === "b0000000".U)
-  val vfma  = (func3 === "b000".U) && (func7 === "b0000100".U)
-  val vfdiv = (func3 === "b100".U) && (func7 === "b0000000".U)
-  val vfcvt = (func3 === "b110".U) && (func7 === "b0000000".U)
 
   out.vuop.opcode := Mux1H(
     Seq(
@@ -120,7 +124,13 @@ class VecDecoder extends Module {
   out.vs2 := Mux(is_vs2_vec, io.rdata_vs2, Cat(0.U, in.rs2))
   out.vs3 := io.rdata_vs3
 
-  io.out.bits   := RegEnable(out, buffer.io.out.fire())
+  val out_reg = Reg(new VDecOutput)
+  when(buffer.io.out.fire()){
+    out_reg := out
+  }.elsewhen(is_buffer_empty && io.out.ready){
+    out_reg := 0.U.asTypeOf(new VDecOutput)
+  }
+  io.out.bits   := out_reg
   io.out.valid  := RegNext(buffer.io.out.fire())
 
   dontTouch(buffer.io.out.bits.pc)

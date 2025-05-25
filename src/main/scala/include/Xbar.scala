@@ -18,13 +18,13 @@ class Xbar extends Module {
 
     })
 
-    val ifu_req = io.ifu.AXI_ARVALID
-    val lsu_req = io.lsu.AXI_AWVALID || io.lsu.AXI_ARVALID
+    val ifu_req  = io.ifu.AXI_ARVALID
+    val lsu_req  = io.lsu.AXI_AWVALID || io.lsu.AXI_ARVALID
     val vlsu_req = io.vlsu.AXI_AWVALID | io.vlsu.AXI_ARVALID
 
     val ifu_ram_finish  = io.sram.AXI_RLAST
     val lsu_ram_finish  = io.sram.AXI_BREADY || io.lsu.AXI_RREADY
-    val vlsu_ram_finish = io.sram.AXI_RLAST  || io.vlsu.AXI_BREADY
+    val vlsu_ram_finish = io.sram.AXI_RLAST  || (io.vlsu.AXI_BREADY && io.vlsu.AXI_BVALID)
 
     val idle :: ifu_ram :: lsu_ram :: vlsu_ram :: Nil = Enum(4)
     val state = RegInit(idle)

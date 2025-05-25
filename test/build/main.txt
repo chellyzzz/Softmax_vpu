@@ -7,7 +7,7 @@ Disassembly of section .text:
 80000000 <_start>:
 80000000:	00000413          	li	s0,0
 80000004:	00000117          	auipc	sp,0x0
-80000008:	11c12103          	lw	sp,284(sp) # 80000120 <_GLOBAL_OFFSET_TABLE_+0x4>
+80000008:	1b412103          	lw	sp,436(sp) # 800001b8 <_GLOBAL_OFFSET_TABLE_+0x4>
 8000000c:	034000ef          	jal	80000040 <_trm_init>
 
 80000010 <halt>:
@@ -29,7 +29,7 @@ Disassembly of section .text:
 80000040 <_trm_init>:
 80000040:	ff010113          	addi	sp,sp,-16
 80000044:	00112623          	sw	ra,12(sp)
-80000048:	04c000ef          	jal	80000094 <main>
+80000048:	0a0000ef          	jal	800000e8 <main>
 8000004c:	fc5ff0ef          	jal	80000010 <halt>
 80000050:	00c12083          	lw	ra,12(sp)
 80000054:	01010113          	addi	sp,sp,16
@@ -51,84 +51,130 @@ Disassembly of section .text:
 8000008c:	fc079ce3          	bnez	a5,80000064 <vec_add_rvv+0x8>
 80000090:	00008067          	ret
 
-80000094 <main>:
-80000094:	ff010113          	addi	sp,sp,-16
-80000098:	00112623          	sw	ra,12(sp)
-8000009c:	00a00693          	li	a3,10
-800000a0:	00000617          	auipc	a2,0x0
-800000a4:	08c62603          	lw	a2,140(a2) # 8000012c <_GLOBAL_OFFSET_TABLE_+0x10>
-800000a8:	00000597          	auipc	a1,0x0
-800000ac:	07c5a583          	lw	a1,124(a1) # 80000124 <_GLOBAL_OFFSET_TABLE_+0x8>
-800000b0:	00000517          	auipc	a0,0x0
-800000b4:	07852503          	lw	a0,120(a0) # 80000128 <_GLOBAL_OFFSET_TABLE_+0xc>
-800000b8:	fa5ff0ef          	jal	8000005c <vec_add_rvv>
-800000bc:	00000513          	li	a0,0
-800000c0:	00c12083          	lw	ra,12(sp)
-800000c4:	01010113          	addi	sp,sp,16
-800000c8:	00008067          	ret
+80000094 <check_answer>:
+80000094:	04060663          	beqz	a2,800000e0 <check_answer+0x4c>
+80000098:	00000793          	li	a5,0
+8000009c:	00052683          	lw	a3,0(a0)
+800000a0:	0005a703          	lw	a4,0(a1)
+800000a4:	00e69e63          	bne	a3,a4,800000c0 <check_answer+0x2c>
+800000a8:	00178793          	addi	a5,a5,1
+800000ac:	00450513          	addi	a0,a0,4
+800000b0:	00458593          	addi	a1,a1,4
+800000b4:	fef614e3          	bne	a2,a5,8000009c <check_answer+0x8>
+800000b8:	00100513          	li	a0,1
+800000bc:	00008067          	ret
+800000c0:	ff010113          	addi	sp,sp,-16
+800000c4:	00112623          	sw	ra,12(sp)
+800000c8:	00000513          	li	a0,0
+800000cc:	f45ff0ef          	jal	80000010 <halt>
+800000d0:	00000513          	li	a0,0
+800000d4:	00c12083          	lw	ra,12(sp)
+800000d8:	01010113          	addi	sp,sp,16
+800000dc:	00008067          	ret
+800000e0:	00100513          	li	a0,1
+800000e4:	00008067          	ret
+
+800000e8 <main>:
+800000e8:	ff010113          	addi	sp,sp,-16
+800000ec:	00112623          	sw	ra,12(sp)
+800000f0:	00a00693          	li	a3,10
+800000f4:	00000617          	auipc	a2,0x0
+800000f8:	0d062603          	lw	a2,208(a2) # 800001c4 <_GLOBAL_OFFSET_TABLE_+0x10>
+800000fc:	00000597          	auipc	a1,0x0
+80000100:	0c05a583          	lw	a1,192(a1) # 800001bc <_GLOBAL_OFFSET_TABLE_+0x8>
+80000104:	00000517          	auipc	a0,0x0
+80000108:	0bc52503          	lw	a0,188(a0) # 800001c0 <_GLOBAL_OFFSET_TABLE_+0xc>
+8000010c:	f51ff0ef          	jal	8000005c <vec_add_rvv>
+80000110:	00a00613          	li	a2,10
+80000114:	00000597          	auipc	a1,0x0
+80000118:	0b45a583          	lw	a1,180(a1) # 800001c8 <_GLOBAL_OFFSET_TABLE_+0x14>
+8000011c:	00000517          	auipc	a0,0x0
+80000120:	0a452503          	lw	a0,164(a0) # 800001c0 <_GLOBAL_OFFSET_TABLE_+0xc>
+80000124:	f71ff0ef          	jal	80000094 <check_answer>
+80000128:	ef5ff0ef          	jal	8000001c <check>
+8000012c:	00000513          	li	a0,0
+80000130:	00c12083          	lw	ra,12(sp)
+80000134:	01010113          	addi	sp,sp,16
+80000138:	00008067          	ret
 
 Disassembly of section .data:
 
-800000cc <y>:
-800000cc:	0000                	.insn	2, 0x
-800000ce:	0000                	.insn	2, 0x
-800000d0:	0009                	.insn	2, 0x0009
-800000d2:	0000                	.insn	2, 0x
-800000d4:	0008                	.insn	2, 0x0008
-800000d6:	0000                	.insn	2, 0x
-800000d8:	00000007          	vle8.v	v0,(zero),v0.t
-800000dc:	0006                	.insn	2, 0x0006
-800000de:	0000                	.insn	2, 0x
-800000e0:	0005                	.insn	2, 0x0005
-800000e2:	0000                	.insn	2, 0x
-800000e4:	0004                	.insn	2, 0x0004
-800000e6:	0000                	.insn	2, 0x
-800000e8:	00000003          	lb	zero,0(zero) # 0 <_start-0x80000000>
-800000ec:	0002                	.insn	2, 0x0002
-800000ee:	0000                	.insn	2, 0x
-800000f0:	0001                	.insn	2, 0x0001
+8000013c <ans>:
+8000013c:	0001                	.insn	2, 0x0001
+8000013e:	0000                	.insn	2, 0x
+80000140:	0000000b          	.insn	4, 0x000b
+80000144:	0000000b          	.insn	4, 0x000b
+80000148:	0000000b          	.insn	4, 0x000b
+8000014c:	0000000b          	.insn	4, 0x000b
+80000150:	0000000b          	.insn	4, 0x000b
+80000154:	0000000b          	.insn	4, 0x000b
+80000158:	0000000b          	.insn	4, 0x000b
+8000015c:	0000000b          	.insn	4, 0x000b
+80000160:	0001                	.insn	2, 0x0001
 	...
 
-800000f4 <x>:
-800000f4:	0001                	.insn	2, 0x0001
-800000f6:	0000                	.insn	2, 0x
-800000f8:	0002                	.insn	2, 0x0002
-800000fa:	0000                	.insn	2, 0x
-800000fc:	00000003          	lb	zero,0(zero) # 0 <_start-0x80000000>
-80000100:	0004                	.insn	2, 0x0004
-80000102:	0000                	.insn	2, 0x
-80000104:	0005                	.insn	2, 0x0005
-80000106:	0000                	.insn	2, 0x
-80000108:	0006                	.insn	2, 0x0006
-8000010a:	0000                	.insn	2, 0x
-8000010c:	00000007          	vle8.v	v0,(zero),v0.t
-80000110:	0008                	.insn	2, 0x0008
-80000112:	0000                	.insn	2, 0x
-80000114:	0009                	.insn	2, 0x0009
-80000116:	0000                	.insn	2, 0x
-80000118:	0000                	.insn	2, 0x
+80000164 <y>:
+80000164:	0000                	.insn	2, 0x
+80000166:	0000                	.insn	2, 0x
+80000168:	0009                	.insn	2, 0x0009
+8000016a:	0000                	.insn	2, 0x
+8000016c:	0008                	.insn	2, 0x0008
+8000016e:	0000                	.insn	2, 0x
+80000170:	00000007          	vle8.v	v0,(zero),v0.t
+80000174:	0006                	.insn	2, 0x0006
+80000176:	0000                	.insn	2, 0x
+80000178:	0005                	.insn	2, 0x0005
+8000017a:	0000                	.insn	2, 0x
+8000017c:	0004                	.insn	2, 0x0004
+8000017e:	0000                	.insn	2, 0x
+80000180:	00000003          	lb	zero,0(zero) # 0 <_start-0x80000000>
+80000184:	0002                	.insn	2, 0x0002
+80000186:	0000                	.insn	2, 0x
+80000188:	0001                	.insn	2, 0x0001
+	...
+
+8000018c <x>:
+8000018c:	0001                	.insn	2, 0x0001
+8000018e:	0000                	.insn	2, 0x
+80000190:	0002                	.insn	2, 0x0002
+80000192:	0000                	.insn	2, 0x
+80000194:	00000003          	lb	zero,0(zero) # 0 <_start-0x80000000>
+80000198:	0004                	.insn	2, 0x0004
+8000019a:	0000                	.insn	2, 0x
+8000019c:	0005                	.insn	2, 0x0005
+8000019e:	0000                	.insn	2, 0x
+800001a0:	0006                	.insn	2, 0x0006
+800001a2:	0000                	.insn	2, 0x
+800001a4:	00000007          	vle8.v	v0,(zero),v0.t
+800001a8:	0008                	.insn	2, 0x0008
+800001aa:	0000                	.insn	2, 0x
+800001ac:	0009                	.insn	2, 0x0009
+800001ae:	0000                	.insn	2, 0x
+800001b0:	0000                	.insn	2, 0x
 	...
 
 Disassembly of section .got:
 
-8000011c <_GLOBAL_OFFSET_TABLE_>:
-8000011c:	0000                	.insn	2, 0x
-8000011e:	0000                	.insn	2, 0x
-80000120:	9000                	.insn	2, 0x9000
-80000122:	8000                	.insn	2, 0x8000
-80000124:	00f4                	.insn	2, 0x00f4
-80000126:	8000                	.insn	2, 0x8000
-80000128:	0138                	.insn	2, 0x0138
-8000012a:	8000                	.insn	2, 0x8000
-8000012c:	00cc                	.insn	2, 0x00cc
-8000012e:	8000                	.insn	2, 0x8000
+800001b4 <_GLOBAL_OFFSET_TABLE_>:
+800001b4:	0000                	.insn	2, 0x
+800001b6:	0000                	.insn	2, 0x
+800001b8:	9000                	.insn	2, 0x9000
+800001ba:	8000                	.insn	2, 0x8000
+800001bc:	018c                	.insn	2, 0x018c
+800001be:	8000                	.insn	2, 0x8000
+800001c0:	01d4                	.insn	2, 0x01d4
+800001c2:	8000                	.insn	2, 0x8000
+800001c4:	0164                	.insn	2, 0x0164
+800001c6:	8000                	.insn	2, 0x8000
+800001c8:	013c                	.insn	2, 0x013c
+800001ca:	8000                	.insn	2, 0x8000
 
 Disassembly of section .got.plt:
 
-80000130 <.got.plt>:
-80000130:	ffff                	.insn	2, 0xffff
-80000132:	ffff                	.insn	2, 0xffff
-80000134:	0000                	.insn	2, 0x
+800001cc <.got.plt>:
+800001cc:	ffff                	.insn	2, 0xffff
+800001ce:	ffff                	.insn	2, 0xffff
+800001d0:	0000                	.insn	2, 0x
 	...
 
 Disassembly of section .comment:

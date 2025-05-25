@@ -109,7 +109,7 @@ bool if_end(){
 
 void cpu_exec(uint64_t n){
   uint64_t max = 40000;
-  // max = n;
+  max = n;
     for(; max > 0; max--){
       if(if_end() | contextp->gotFinish() | if_stop){
         printf("Program execution has ended. To restart the program, exit NPC and run again.\n");

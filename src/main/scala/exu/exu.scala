@@ -125,7 +125,6 @@ class EXU extends Module {
   io.o_res := Mux(io.i_load, loadRes, aluRes)
   io.o_brch := io.i_brch && brchRes
 
-
   val get_vl = Module(new Get_Vset)
   get_vl.io.vset := io.idu_vset
   io.exu_vset.vl := get_vl.io.vl 

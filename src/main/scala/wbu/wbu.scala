@@ -22,19 +22,19 @@ class WBU extends Module {
     val i_pc_next = Input(UInt(DataWidth.W))
     val i_res = Input(UInt(DataWidth.W))
     
-    val o_pc_next = Output(UInt(DataWidth.W))
-    val o_rd_wdata = Output(UInt(DataWidth.W))
-    val o_csr_rd_wdata = Output(UInt(DataWidth.W))
-    val o_wbu_wen = Output(Bool())
-    val o_wbu_csr_wen = Output(Bool())
-    val o_rd_addr = Output(UInt(RegAddrWidth.W))
-    val o_csr_addr = Output(UInt(12.W))
-    val o_pre_ready = Output(Bool())
-    val o_pc_update = Output(Bool())
+    val o_pc_next       = Output(UInt(DataWidth.W))
+    val o_rd_wdata      = Output(UInt(DataWidth.W))
+    val o_csr_rd_wdata  = Output(UInt(DataWidth.W))
+    val o_wbu_wen       = Output(Bool())
+    val o_wbu_csr_wen   = Output(Bool())
+    val o_rd_addr       = Output(UInt(RegAddrWidth.W))
+    val o_csr_addr      = Output(UInt(12.W))
+    val o_pre_ready     = Output(Bool())
+    val o_pc_update     = Output(Bool())
 
+    val i_diff_pc = if (debug) Input(UInt(32.W)) else Input(UInt(0.W))
     val next = if (debug) Input(Bool()) else Input(UInt(0.W))
     val diff = if (debug) Output(Bool()) else Output(UInt(0.W))
-
   })
 
   // Output assignments
@@ -64,6 +64,10 @@ class WBU extends Module {
     val diff = RegInit(false.B)
     diff := io.next
     io.diff := diff
+    val diff_pc = RegNext(io.i_diff_pc)
+    dontTouch(io.next)
+    dontTouch(io.diff)
+    dontTouch(diff_pc)
   }
     
   o_pc_next := io.i_pc_next

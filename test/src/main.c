@@ -23,9 +23,13 @@
 #include <riscv_vector.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include "common.h"
 
-int32_t x[10] = {1,2,3,4,5,6,7,8,9,0};
-int32_t y[10] = {0,9,8,7,6,5,4,3,2,1};
+int32_t x[10]   = {1,2,3,4,5,6,7,8,9,0};
+int32_t y[10]   = {0,9,8,7,6,5,4,3,2,1};
+int32_t ans[10] = {1,11,11,11,11,11,11,11,11,1};
 int32_t z[10];
 
 void vec_add_rvv(int32_t* dst, const int32_t* lhs, const int32_t* rhs, size_t avl) {
@@ -39,10 +43,20 @@ void vec_add_rvv(int32_t* dst, const int32_t* lhs, const int32_t* rhs, size_t av
     }
 }
 
+bool check_answer(int32_t* dst, const int32_t* ans, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        if (dst[i] != ans[i]) {
+            halt(0);
+            return false;
+        }
+    }
+    return true;
+}
 
 int main(int argc, char const* argv[]) {
 
     vec_add_rvv(z, x, y, 10);
+    check(check_answer(z, ans, 10));
     return 0;
     
 }

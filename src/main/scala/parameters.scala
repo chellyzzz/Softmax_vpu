@@ -7,8 +7,10 @@ object Parameter {
   val OptWidth:  Int = 10  
   val RegAddrWidth: Int = 5 
   val CSR_ADDR : Int = 12
-  val VLEN : Int = 128
+  val VLEN : Int = 256
   val VLENB : Int = VLEN / 8
+  val XLEN : Int = 64
+  val AXI_AXLEN: Int = VLEN / 32 - 1
   val debug: Boolean = true  
 }
 
@@ -68,7 +70,7 @@ object VLSU_MOP {
 }
 
 object VALU_OP {
-  def width = 4
+  def width = 10
   def VADD  = "b000".U(width.W)
   def VFMAD = "b000".U(width.W)
   def VFDIV = "b001".U(width.W)

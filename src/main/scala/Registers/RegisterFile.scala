@@ -7,21 +7,21 @@ import Parameter._
 class RegisterFile extends Module {
   val io = IO(new Bundle {
     val wdata = Input(UInt(DataWidth.W))
-    val waddr = Input(UInt(4.W))
+    val waddr = Input(UInt(RegAddrWidth.W))
 
-    val exu_rd = Input(UInt(4.W))
+    val exu_rd = Input(UInt(RegAddrWidth.W))
     val exu_wdata = Input(UInt(DataWidth.W))
     val exu_wen = Input(Bool())
 
-    val wbu_rd = Input(UInt(4.W))
+    val wbu_rd = Input(UInt(RegAddrWidth.W))
     val wbu_wdata = Input(UInt(DataWidth.W))
     val wbu_wen = Input(Bool())
 
     val idu_wen = Input(Bool())
-    val idu_waddr = Input(UInt(4.W))
+    val idu_waddr = Input(UInt(RegAddrWidth.W))
 
-    val raddr1 = Input(UInt(4.W))
-    val raddr2 = Input(UInt(4.W))
+    val raddr1 = Input(UInt(RegAddrWidth.W))
+    val raddr2 = Input(UInt(RegAddrWidth.W))
 
     val rdata1 = Output(UInt(DataWidth.W))
     val rdata2 = Output(UInt(DataWidth.W))

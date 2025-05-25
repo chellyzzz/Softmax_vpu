@@ -8,7 +8,7 @@ import cpu.Parameter._
 class VectorRegisterFile extends Module {
   val io = IO(new Bundle {
     val wdata = Input(UInt(VLEN.W))
-    val waddr = Input(UInt(4.W))
+    val waddr = Input(UInt(5.W))
     val wen = Input(Bool())
 
     val raddr1 = Input(UInt(5.W))

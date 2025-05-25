@@ -13,8 +13,12 @@ class CpuCore extends Module {
     val flush     = Output(Bool())
     val ebreak    = Output(Bool())
     val diff      = if (debug) Output(Bool()) else Output(UInt(0.W))
+    val pc        = if (debug) Output(UInt(32.W)) else Output(UInt(0.W))
+    val ins       = if (debug) Output(UInt(32.W)) else Output(UInt(0.W))
   })
   
+  dontTouch(io.pc)
+  dontTouch(io.ins)
   // Define various signal types
   val imm = Wire(UInt(DataWidth.W))
   val idu_addr_rs1 = Wire(UInt(RegAddrWidth.W))
@@ -66,7 +70,7 @@ class CpuCore extends Module {
   val idu2exu_imm = Wire(UInt(32.W))
   val idu2exu_src_sel1 = Wire(UInt(2.W))
   val idu2exu_src_sel2 = Wire(UInt(3.W))
-  val idu2exu_rd = Wire(UInt(4.W))
+  val idu2exu_rd = Wire(UInt(RegAddrWidth.W))
   val idu2exu_exu_opt = Wire(UInt(3.W))
   val idu2exu_alu_opt = Wire(UInt(OptWidth.W))
   val idu2exu_wen = Wire(Bool())
@@ -84,7 +88,7 @@ class CpuCore extends Module {
 
   val exu2wbu_pc_next = Wire(UInt(32.W))
   val exu2wbu_csr_addr = Wire(UInt(12.W))
-  val exu2wbu_rd_addr = Wire(UInt(4.W))
+  val exu2wbu_rd_addr = Wire(UInt(RegAddrWidth.W))
   val exu2wbu_wen = Wire(Bool())
   val exu2wbu_csr_wen = Wire(Bool())
   val exu2wbu_brch = Wire(Bool())
@@ -156,6 +160,9 @@ class CpuCore extends Module {
   ifu2idu_regs.io.i_post_ready  := idu2ifu_ready
   ifu2idu_valid                 := ifu2idu_regs.io.o_post_valid
   
+  io.ins := ifu2idu_regs.io.o_ins
+  io.pc  := ifu2idu_regs.io.o_pc
+
   idu.io.ins   :=  ifu2idu_regs.io.o_ins  
   imm           :=  idu.io.o_imm      
   idu_addr_rd   :=  idu.io.o_rd       
@@ -377,7 +384,8 @@ class CpuCore extends Module {
   if(Parameter.debug){
     io.diff := wbu.io.diff
     wbu.io.next := exu_wbu_regs.io.next
-
+    wbu.io.i_diff_pc := exu_wbu_regs.io.o_diff_pc
+    exu_wbu_regs.io.i_pc := idu2exu_regs.io.out.pc
   }
 
 }
